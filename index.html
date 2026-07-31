@@ -168,6 +168,10 @@ html,body{margin:0;padding:0;height:100%;overflow:hidden;background:#0d150f;
 #speedbtn.hot{border-color:var(--gold);
   box-shadow:0 0 0 1px rgba(201,162,39,.4),0 2px 0 #100b03,0 4px 8px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,235,170,.25)}
 #speedbtn.hot #speedlbl{color:var(--gold-hi)}
+#vol-wrap{display:flex;align-items:center;gap:4px;margin-left:6px;pointer-events:auto}
+#vol-ico{font-size:12px;color:var(--gold-hi);text-shadow:0 1px 3px #000;width:16px;text-align:center}
+#vol-slider{width:52px;height:4px;cursor:pointer;background:var(--wood-dk);border-radius:2px;accent-color:var(--gold);outline:none}
+#vol-slider::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:11px;height:11px;background:var(--gold);border-radius:50%;border:1px solid var(--gold-dk);cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.5)}
 
 #hint{position:absolute;left:12px;bottom:86px;z-index:4;pointer-events:none;font-size:10px;
   letter-spacing:.08em;color:rgba(236,223,186,.72);text-shadow:0 1px 3px #000}
@@ -312,13 +316,21 @@ html,body{margin:0;padding:0;height:100%;overflow:hidden;background:#0d150f;
     <div class="sec-title">Reclutamiento<i class="sec-hint">teclas 1–9</i></div>
     <div class="army-row" id="army-row"></div>
   </section>
+  <section class="dock-sec" id="upg-sec">
+    <div class="sec-title">Herrería<i class="sec-hint">Q · W</i></div>
+    <div class="row">
+      <button class="btn buy" id="upg-atk"><span>Forja</span><span class="pips" id="upg-atk-pips"></span><span class="cost" id="upg-atk-cost"></span></button>
+      <button class="btn buy" id="upg-def"><span>Armadura</span><span class="pips" id="upg-def-pips"></span><span class="cost" id="upg-def-cost"></span></button>
+    </div>
+  </section>
   <section class="dock-sec" id="speed-sec">
     <div class="sec-title">Ritmo<i class="sec-hint">V · +/−</i></div>
     <button class="btn" id="speedbtn" title="V para alternar, +/− para ajustar"><span id="speedlbl">x1</span></button>
+    <div id="vol-wrap"><label id="vol-ico">🔊</label><input type="range" id="vol-slider" min="0" max="100" value="80"></div>
   </section>
 </footer>
 
-<div id="hint">1–9 reclutar · F avanzar de edad · V / + / − ritmo de partida · M silencio · la caballería raidea granjas, minas y aserraderos enemigos</div>
+<div id="hint">1–9 reclutar · F edad · Q/W mejoras · V / + / − ritmo · M silencio · la caballería raidea economía rival</div>
 <div id="toast"></div>
 
 <div id="overlay">
@@ -365,13 +377,14 @@ const AGES=[
 ];
 const AGE_UNLOCK={1:['Arqueros y Jinete Ligero','ingresos +25%'],2:['Caballero, Ballestero y Mangonel','veteranía: +25% daño y vidas'],3:['Élite, Arcabucero y Bombarda','veteranía: +25% daño y vidas']};
 const AGE_TIME=8, CASTLE_HP=2000, QUEUE_CAP=6, ENG_CAP=8, SIDE_CAP=42, AI_EFF=1.0;
+const castleMaxHp=side=>CASTLE_HP*(1+0.12*S.sides[side].age);
 const BASE_INCOME={food:4.5, wood:2.5, gold:1.8};
 const ENGINES={
   farm:{name:'Granja',    res:'food', rate:2.2, base:60, growth:1.55, costRes:'food'},
   wood:{name:'Aserradero',res:'wood', rate:1.8, base:60, growth:1.55, costRes:'wood'},
   mine:{name:'Mina',      res:'gold', rate:1.5, base:70, growth:1.60, costRes:'gold'}
 };
-const CASTLE_DEF_DMG=12, CASTLE_DEF_RANGE=200, CASTLE_DEF_CD=0.8;
+const CASTLE_DEF_DMG=12, CASTLE_DEF_RANGE=210, CASTLE_DEF_CD=0.8;
 /* Roster inspirado en AoE4: clases, edad de desbloqueo y counters fieles,
    con escala de HP/daño propia del minijuego. Claves de bonus: tipos exactos
    o clases ('cav', 'ranged', 'heavy', 'siege'). */
@@ -421,6 +434,13 @@ const CIV_STATMUL={
   delhi:(d,m)=>{if(d.mount&&!d.siege)m.hp*=1.12;}
 };
 const NODE_NAME={farm:'la granja', wood:'el aserradero', mine:'la mina de oro'};
+/* ---- Herrería: forja (ataque) y armadura, mejora por edad al estilo AoE ---- */
+const UPG={
+  atk:{name:'Forja',    max:3, step:0.12, age:[1,2,3],
+       cost:[{food:120,gold:80},{food:200,gold:140},{food:320,gold:220}]},
+  def:{name:'Armadura', max:3, step:0.09, age:[1,2,3],
+       cost:[{wood:110,gold:80},{wood:190,gold:140},{wood:300,gold:220}]}
+};
 const WORKER_HP=26, WORKER_RESPAWN=6.5;
 const AI_MIN_AGE_T=[0,55,170,450];
 const AI_TRAIN_INT=[10,7.5,6.5,5.5];
@@ -460,14 +480,14 @@ function newSide(){
   return {res:{food:150,wood:120,gold:100}, eng:{farm:0,wood:0,mine:0},
     workers:{farm:{alive:0,max:0,hp:0,rt:0}, wood:{alive:0,max:0,hp:0,rt:0}, mine:{alive:0,max:0,hp:0,rt:0}},
     lastRaid:{food:-99,wood:-99,gold:-99},
-    age:0, aging:false, ageT:0, queue:[], stats:{trained:0,lost:0}, castleHp:CASTLE_HP};
+    age:0, aging:false, ageT:0, queue:[], stats:{trained:0,lost:0}, castleHp:CASTLE_HP, upg:{atk:0,def:0}};
 }
 function newGame(pCiv,eCiv){
   S={t:0, over:false, winner:null, overT:0, shownOver:false, shake:0,
     sides:{P:newSide(), E:newSide()},
     units:[], arrows:[], parts:[], nums:[], rings:[],
     clouds:[], birds:[], birdT:rr(4,9),
-    playerRecent:[], aiThinkT:1.0, aiTrainT:5.0, aiEngT:0, aiPlan:'lancer', aiAlarm:0,
+    playerRecent:[], aiThinkT:1.0, aiTrainT:5.0, aiEngT:0, aiUpgT:0, aiPlan:'lancer', aiAlarm:0,
     raidWarn:{P:{farm:-99,wood:-99,mine:-99}, E:{farm:-99,wood:-99,mine:-99}},
     raidEnd:{P:{farm:false,wood:false,mine:false}, E:{farm:false,wood:false,mine:false}},
     herald:[], atkWarn:{P:-99,E:-99}};
@@ -488,7 +508,7 @@ function unitCost(side,type){
   const def=UNITS[type];
   const civ=civOf(side);
   const mul=civ&&CIV_COSTMUL[S.sides[side].civ]?CIV_COSTMUL[S.sides[side].civ](def):1;
-  if(mul===1)return def.cost;
+  if(mul===1)return {...def.cost};
   const out={};
   for(const k in def.cost)out[k]=Math.max(1,Math.round(def.cost[k]*mul));
   return out;
@@ -543,6 +563,8 @@ function economyTick(dt){
 function onAgeUp(side){
   const s=S.sides[side], A=AGES[s.age];
   const civ=s.civ;
+  // Al subir de edad el castillo se refuerza: el HP máximo escala 12% por edad
+  s.castleHp=Math.min(s.castleHp+CASTLE_HP*0.12,castleMaxHp(side));
   if(side==='P'){
     flashGold(); Snd.ageFanfare();
     heraldSay('Alcanzáis la '+A.name+' ('+A.num+')','gold');
@@ -556,6 +578,22 @@ function onAgeUp(side){
     if(civ&&UNITS[CIVS[civ].unit].age===s.age)
       heraldSay('Vermell despliega su unidad única: '+UNITS[CIVS[civ].unit].name,'warn');
   }
+}
+function buyUpg(side,k){ // k:'atk'|'def'  -> true si compró
+  const s=S.sides[side], u=UPG[k], lvl=s.upg[k];
+  if(lvl>=u.max)return false;
+  if(s.age<u.age[lvl])return false;
+  const cost=u.cost[lvl];
+  if(!canAfford(side,cost))return false;
+  pay(side,cost); s.upg[k]++;
+  if(side==='P'){ Snd.train(); heraldSay(k==='atk'
+      ? '¡Forja mejorada (Nv '+s.upg[k]+')! Nuestras armas golpean con más filo.'
+      : '¡Armadura reforzada (Nv '+s.upg[k]+')! Nuestras tropas encajan mejor los golpes.','gold'); }
+  return true;
+}
+function playerBuyUpg(k){
+  if(S.over)return;
+  if(!buyUpg('P',k)){Snd.thud();const el2=el.upgBtn[k];if(el2)el2.classList.remove('deny');void(el2&&el2.offsetWidth);if(el2)el2.classList.add('deny');}
 }
 function playerAgeUp(){
   if(S.over)return;
@@ -609,7 +647,7 @@ function spawnUnit(side,type){
   S.units.push({side,type,x:castleFrontX(side)+dir*18,y0:rr(-16,16),
     hp:def.hp*mul*sm.hp,max:def.hp*mul*sm.hp,dmg:def.dmg*mul*sm.dmg,spd:def.spd*sm.spd,
     cdt:rr(0,0.3),ph:Math.random()*6,flash:0,
-    dying:false,dieT:0});
+    dying:false,dieT:0,rally:0,age:S.sides[side].age});
   S.rings.push({x:castleFrontX(side)+dir*18,y:laneY(),r:4,t:0.5,side});
   if(side==='P')Snd.march();
 }
@@ -736,7 +774,9 @@ function castleDefenseTick(dt){
       c.cdDef=CASTLE_DEF_CD;
       S.arrows.push({x:fx,y:laneY()-95,sx:fx,tx:foe.x,ty:laneY()+foe.y0-12,t:0,dur:0.22,side});
       arrowSnd();
-      damageUnit(foe,Math.round(CASTLE_DEF_DMG*(1+c.age*0.25)));
+      const def=UNITS[foe.type];
+      const siegeMul=def&&def.siege?2:1;
+      damageUnit(foe,Math.round(CASTLE_DEF_DMG*(1+c.age*0.25)*siegeMul));
     }
   }
 }
@@ -758,7 +798,8 @@ function attack(u,foe){
   const home=Math.abs(u.x-castleFrontX(u.side))<240?1.25:1;
   u.flash=0.22;
   const shots=def.volley||1;
-  const dmg=Math.max(1,Math.round(u.dmg*mult*home*(shots>1?0.55:1)));
+  const atkMul=1+UPG.atk.step*S.sides[u.side].upg.atk;
+  const dmg=Math.max(1,Math.round(u.dmg*mult*home*atkMul*(shots>1?0.55:1)));
   for(let i=0;i<shots;i++){
     if(def.ranged){
       S.arrows.push({x:u.x,y:laneY()+u.y0-20,sx:u.x,tx:foe.x+(shots>1?rr(-10,10):0),ty:laneY()+foe.y0-14,
@@ -769,13 +810,13 @@ function attack(u,foe){
       hitSnd();
       spark(foe.x,laneY()+foe.y0-12);
     }
-    damageUnit(foe,dmg);
+    damageUnit(foe,dmg,mult>1);
   }
   // el mangonel castiga al grupo entero, no a una sola víctima
   if(def.splash){
     for(const v of S.units){
       if(v.side===u.side||v.dying||v===foe)continue;
-      if(Math.abs(v.x-foe.x)<=def.splash&&Math.abs(v.y0-foe.y0)<=def.splash*0.7)damageUnit(v,dmg);
+      if(Math.abs(v.x-foe.x)<=def.splash&&Math.abs(v.y0-foe.y0)<=def.splash*0.7)damageUnit(v,dmg,mult>1);
     }
     S.rings.push({x:foe.x,y:laneY()+foe.y0,t:0.5,big:def.splash});
     dust(foe.x,laneY()+foe.y0);
@@ -786,7 +827,8 @@ function attackCastle(u){
   const def=UNITS[u.type];
   const target=u.side==='P'?'E':'P';
   const c=S.sides[target];
-  const dmg=Math.round(u.dmg*(def.castleBonus||1));
+  const atkMul=1+UPG.atk.step*S.sides[u.side].upg.atk;
+  const dmg=Math.round(u.dmg*atkMul*(def.castleBonus||1));
   c.castleHp=Math.max(0,c.castleHp-dmg);
   const fx=castleFrontX(target), y=laneY()-rr(10,70);
   if(def.ranged){
@@ -856,10 +898,12 @@ function villagerDown(x,y){
 function flameBurst(x,y){
   for(let i=0;i<8;i++)S.parts.push({x:x+rr(-6,6),y:y+rr(-6,6),vx:rr(-26,26),vy:rr(-60,-18),t:rr(0.25,0.5),life:0.5,r:rr(2,4.5),g:60,kind:'flame'});
 }
-function damageUnit(v,dmg){
+function damageUnit(v,dmg,bonus){
   if(v.dying)return;
+  const defMul=1-UPG.def.step*S.sides[v.side].upg.def;
+  dmg=Math.max(1,Math.round(dmg*defMul));
   v.hp-=dmg;
-  S.nums.push({x:v.x+rr(-6,6),y:laneY()+v.y0-26,t:0.8,v:dmg,crit:dmg>=16});
+  S.nums.push({x:v.x+rr(-6,6),y:laneY()+v.y0-26,t:0.8,v:dmg,crit:dmg>=16,bonus:!!bonus});
   if(v.hp<=0){
     v.dying=true; v.dieT=0.6; v.hp=0;
     S.sides[v.side].stats.lost++;
@@ -891,7 +935,7 @@ function fxTick(dt){
   for(const c of S.clouds){c.x+=c.v*dt/W;if(c.x>1.25)c.x=-0.25;}
   // humo de castillos dañados
   for(const side of ['P','E']){
-    const c=S.sides[side], pct=c.castleHp/CASTLE_HP;
+    const c=S.sides[side], pct=c.castleHp/castleMaxHp(side);
     if(pct<0.6&&Math.random()<dt*(pct<0.35?9:4)){
       S.parts.push({x:castleX(side)+rr(20,castleW()-20),y:laneY()-rr(60,Math.min(200,castleH()-30)),vx:rr(-6,6),vy:rr(-26,-14),
         t:rr(1.2,2.2),life:2.2,r:rr(5,10),g:-6,kind:'smoke'});
@@ -968,6 +1012,14 @@ function aiTick(dt){
     // cada casa confía en su unidad única
     if(e.civ&&Math.random()<0.4)S.aiPlan=CIVS[e.civ].unit;
   }
+  // 4b) mejoras de herrería: la IA también invierte en forja y armadura
+  S.aiUpgT-=dt;
+  if(S.aiUpgT<=0){
+    S.aiUpgT=6;
+    const first = S.aiAlarm>0 ? 'def' : 'atk';
+    const second = first==='atk' ? 'def' : 'atk';
+    aiTryUpg(first, reserve) || aiTryUpg(second, reserve);
+  }
   // 4) entrenar sin vaciar la reserva de la edad y con plantillas por edad (como un humano:
   //    no infinita carne de cañón; consolida un ejército y presiona con él)
   const armyNow=armyCount('E')+queueLen('E');
@@ -986,17 +1038,31 @@ function aiTick(dt){
   }
 }
 
+function aiTryUpg(k,reserve){
+  const e=S.sides.E, u=UPG[k], lvl=e.upg[k];
+  if(lvl>=u.max||e.age<u.age[lvl])return false;
+  const cost=u.cost[lvl];
+  for(const r in cost) if(e.res[r] < cost[r] + (reserve[r]||0) + 80) return false;
+  return buyUpg('E',k);
+}
 /* ---- Sonido (WebAudio sintetizado, sin archivos) ---- */
 const Snd={
-  ctx:null,lastHit:0,lastArrow:0,lastBoom:0,
+  ctx:null,lastHit:0,lastArrow:0,lastBoom:0,vol:0.8,master:null,
   ensure(){
     if(!this.ctx){
       const AC=window.AudioContext||window.webkitAudioContext;
       if(!AC)return;
       try{this.ctx=new AC();}catch(e){return;}
     }
+    if(!this.master){
+      this.master=this.ctx.createGain();
+      this.master.gain.value=this.vol;
+      this.master.connect(this.ctx.destination);
+    }
     if(this.ctx.state==='suspended')this.ctx.resume();
   },
+  setVolume(v){this.vol=clamp(v,0,1);if(this.master)this.master.gain.value=this.vol;},
+  getVolume(){return this.vol;},
   tone(o){
     if(muted)return;
     this.ensure(); const c=this.ctx; if(!c)return;
@@ -1008,7 +1074,7 @@ const Snd={
     g.gain.setValueAtTime(0.0001,t0);
     g.gain.exponentialRampToValueAtTime(o.vol||0.12,t0+0.012);
     g.gain.exponentialRampToValueAtTime(0.0001,t0+d);
-    os.connect(g);g.connect(c.destination);
+    os.connect(g);g.connect(this.master||c.destination);
     os.start(t0);os.stop(t0+d+0.03);
   },
   noise(dur,vol,delay){
@@ -1021,7 +1087,7 @@ const Snd={
     const src=c.createBufferSource();src.buffer=buf;
     const g=c.createGain();g.gain.setValueAtTime(vol,t0);
     g.gain.exponentialRampToValueAtTime(0.0001,t0+dur);
-    src.connect(g);g.connect(c.destination);src.start(t0);
+    src.connect(g);g.connect(this.master||c.destination);src.start(t0);
   },
   click(){this.tone({f:760,f2:620,dur:0.06,type:'square',vol:0.045});},
   thud(){this.tone({f:120,f2:55,dur:0.13,type:'triangle',vol:0.15});},
@@ -1128,8 +1194,9 @@ globalThis.GAME={
     const s=S.sides.P;
     return (S.hotkeys||UNIT_ORDER).filter(t=>s.age>=UNITS[t].age);
   },
-  buyEngine, ageUp:playerAgeUp, restart,
+  buyEngine, ageUp:playerAgeUp, buyUpg:k=>playerBuyUpg(k), restart,
   setSpeed:v=>setSpeed(v), cycleSpeed:dir=>cycleSpeed(dir), getSpeed:()=>gameSpeed,
+  setVolume:v=>Snd.setVolume(v), getVolume:()=>Snd.getVolume(),
   _geo:()=>({W,H,horizon:horizonY(),lane:laneY(),cW:castleW(),cH:castleH(),
     baseY:castleBaseY(),frontP:castleFrontX('P'),frontE:castleFrontX('E'),
     nodeFarmP:nodePos('farm','P'),nodeWoodP:nodePos('wood','P'),nodeMineP:nodePos('mine','P')}),
@@ -1155,6 +1222,8 @@ globalThis.GAME={
   _herald:()=>S.herald.map(h=>h.text),
   _over:()=>({over:S.over,winner:S.winner}),
   _startMatch:(p,e)=>newGame(p,e),
+  _buyUpg:(side,k)=>buyUpg(side,k),
+  _upg:(side,k)=>S.sides[side].upg[k],
   _civ:side=>S.sides[side].civ,
   _roster:civ=>rosterFor(civ),
   _unitCost:(side,t)=>unitCost(side,t),
@@ -1166,7 +1235,7 @@ globalThis.GAME={
       pCastle:P.castleHp,eCastle:E.castleHp,
       resSum:P.res.food+P.res.wood+P.res.gold,
       pAge:P.age,eAge:E.age,engSum:P.eng.farm+P.eng.wood+P.eng.mine,
-      castleMax:CASTLE_HP};
+      castleMax:castleMaxHp('P'),castleMaxE:castleMaxHp('E')};
   }
 };
 
@@ -1311,7 +1380,7 @@ function drawCastle(side){
   // ventana saetera
   ctx.fillStyle='#2b2416';ctx.fillRect(63,34,5,16);
   // grietas y fuego según daño
-  const pct=s.castleHp/CASTLE_HP;
+  const pct=s.castleHp/castleMaxHp(side);
   if(pct<0.6){
     ctx.strokeStyle='rgba(18,15,10,0.55)';ctx.lineWidth=2;
     ctx.beginPath();ctx.moveTo(28,22);ctx.lineTo(36,52);ctx.lineTo(27,82);ctx.stroke();
@@ -1462,10 +1531,29 @@ function drawUnit(u){
   const shw=def.siege?16:def.kind==='elephant'?20:def.mount?14:8;
   ctx.fillStyle='rgba(10,15,8,0.28)';
   ctx.beginPath();ctx.ellipse(0,1,shw,3,0,0,6.29);ctx.fill();
+  // Aura de veterano: anillo dorado sutil bajo la unidad según edad
+  if((u.age||0)>=2){
+    const auA=(u.age||0)>=3?0.22:0.10, auW=(u.age||0)>=3?3:2;
+    ctx.strokeStyle='rgba(201,162,39,'+auA+')';
+    ctx.lineWidth=auW;
+    ctx.beginPath();ctx.arc(0,1,shw+5,0,Math.PI*2);ctx.stroke();
+    if((u.age||0)>=3){ // segundo anillo más amplio
+      ctx.strokeStyle='rgba(201,162,39,0.12)';
+      ctx.lineWidth=1.4;
+      ctx.beginPath();ctx.arc(0,1,shw+10,0,Math.PI*2);ctx.stroke();
+    }
+  }
   if(def.siege)drawSiege(u,cl,bob);
   else if(def.kind==='elephant')drawElephant(u,cl,bob);
   else if(def.mount)drawMounted(u,cl,bob);
   else drawInfantry(u,cl,bob);
+  // Flash de golpe: superposición blanca semitransparente
+  if((u.flash||0)>0){
+    ctx.globalAlpha=(u.flash||0)*0.45;
+    ctx.fillStyle='#ffffff';
+    ctx.fillRect(-shw-3,-26,shw*2+6,34);
+    ctx.globalAlpha=alpha;
+  }
   ctx.restore();
   if(u.hp<u.max&&!u.dying){
     const bw=(def.mount||def.kind==='elephant')?28:def.siege?26:22;
@@ -1794,7 +1882,7 @@ function drawNums(){
     ctx.font=n.castle?'700 15px Georgia,serif':'700 '+(n.crit?13:11)+'px Georgia,serif';
     ctx.globalAlpha=a;
     ctx.lineWidth=3;ctx.strokeStyle='rgba(30,12,8,0.85)';
-    ctx.fillStyle=n.raid?'#ff8d70':n.castle?'#f5deb0':n.crit?'#f0d06e':'#ffffff';
+    ctx.fillStyle=n.raid?'#ff8d70':n.castle?'#f5deb0':n.bonus?'#ff8c1a':n.crit?'#f0d06e':'#ffffff';
     const txt=n.raid?'¡aldeano!':'-'+n.v;
     ctx.strokeText(txt,n.x,y);ctx.fillText(txt,n.x,y);
   }
@@ -1941,7 +2029,16 @@ function buildArmyDock(){
       for(const k in cost)costHtml+='<span class="cost"><b>'+Math.round(cost[k])+'</b>'+RES_ICONS[k]+'</span>';
       const b=document.createElement('button');
       b.className='btn ubtn'+(UNITS[t].unique?' ubtn-unique':'');b.dataset.unit=t;
-      b.title=UNITS[t].name+' · tecla '+(list.indexOf(t)+1);
+      // tooltip de contadores
+      const bns=UNITS[t].bonus;
+      let tip=UNITS[t].name+' · tecla '+(list.indexOf(t)+1);
+      if(bns){
+        const bLabels={cav:'caballería',ranged:'a distancia',heavy:'pesados',siege:'asedio',
+          lancer:'lanceros',knight:'caballeros',scout:'jinetes',crossbow:'ballesteros'};
+        const parts=Object.keys(bns).map(k=>bLabels[k]||k).filter(Boolean);
+        if(parts.length)tip+=' · fuerte vs '+parts.join(', ')+' (x'+Object.values(bns).join('/x')+')';
+      }
+      b.title=tip;
       b.innerHTML='<span class="ukbd">'+(list.indexOf(t)+1)+'</span>'+
         '<span class="u-icowrap"><svg class="u-ico" viewBox="0 0 36 36" aria-hidden="true">'+ICONS[t]+'</svg><i class="ucd"></i></span>'+
         '<span class="u-txt"><span class="u-name">'+UNITS[t].name+
@@ -1984,6 +2081,9 @@ function cacheDom(){
   }
   el.armyRow=$('army-row');
   el.speedBtn=$('speedbtn');el.speedLbl=$('speedlbl');
+  el.upgBtn={atk:$('upg-atk'),def:$('upg-def')};
+  el.upgPips={atk:$('upg-atk-pips'),def:$('upg-def-pips')};
+  el.upgCost={atk:$('upg-atk-cost'),def:$('upg-def-cost')};
   el.ageBtn=$('agebtn');
   el.ageName=el.ageBtn.querySelector('.a-name');
   el.ageCost=el.ageBtn.querySelector('.a-cost');
@@ -2038,6 +2138,27 @@ function uiTick(){
       b.classList.toggle('cant',!canAfford('P',{[eng.costRes]:c}));
     }
   }
+  for(const k of ['atk','def']){
+    const u=UPG[k],lvl=P.upg[k],b=el.upgBtn[k];
+    if(!b)continue;
+    const pips=el.upgPips[k],costEl=el.upgCost[k];
+    if(lvl>=u.max){
+      b.classList.add('maxed');b.classList.remove('cant');
+      pips.textContent='●●●';costEl.textContent='MÁX';
+    }else if(P.age<u.age[lvl]){
+      b.classList.remove('maxed');b.classList.add('cant');
+      pips.textContent='●'.repeat(lvl)+'○'.repeat(u.max-lvl);
+      costEl.textContent='Req. '+AGES[u.age[lvl]].name;
+    }else{
+      b.classList.remove('maxed');
+      const cost=u.cost[lvl];
+      pips.textContent='●'.repeat(lvl)+'○'.repeat(u.max-lvl);
+      costEl.innerHTML='<b>'+(cost.food||'')+'</b>'+(cost.food?'<svg viewBox="0 0 16 16" aria-hidden="true"><ellipse cx="8" cy="7" rx="2.4" ry="4.4" fill="#dcb24a"/><path d="M8 14V8" stroke="#b98f2e" stroke-width="1.6"/></svg>':'')+
+        '<b>'+(cost.wood||'')+'</b>'+(cost.wood?'<svg viewBox="0 0 16 16" aria-hidden="true"><rect x="2" y="6" width="12" height="5.6" rx="2.8" fill="#7a5230"/><circle cx="4.8" cy="8.8" r="1.9" fill="#a5793f"/></svg>':'')+
+        '<b>'+(cost.gold||'')+'</b>'+(cost.gold?'<svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.4" fill="#e0b64a" stroke="#8a6d1c" stroke-width="1.2"/></svg>':'');
+      b.classList.toggle('cant',!canAfford('P',cost));
+    }
+  }
   for(const t of S.hotkeys||UNIT_ORDER){
     const b=el.unitBtn[t];if(!b)continue;
     const def=UNITS[t],locked=P.age<def.age;
@@ -2081,8 +2202,12 @@ function uiTick(){
 /* ---- entrada ---- */
 function wire(){
   for(const k in ENGINES)el.buyBtn[k].addEventListener('click',()=>buyEngine(k));
+  el.upgBtn.atk.addEventListener('click',()=>playerBuyUpg('atk'));
+  el.upgBtn.def.addEventListener('click',()=>playerBuyUpg('def'));
   el.ageBtn.addEventListener('click',playerAgeUp);
   el.speedBtn.addEventListener('click',()=>cycleSpeed());
+  el.volSlider=document.getElementById('vol-slider');
+  el.volSlider.addEventListener('input',()=>Snd.setVolume(el.volSlider.value/100));
   document.getElementById('btn-restart').addEventListener('click',restart);
   el.btnCivpick.addEventListener('click',backToCivPick);
   addEventListener('pointerdown',()=>Snd.ensure());
@@ -2095,6 +2220,8 @@ function wire(){
       return;
     }
     if(k==='m'){muted=!muted;toast(muted?'Silencio en el campamento':'Se oyen los tambores');}
+    else if(k==='q')playerBuyUpg('atk');
+    else if(k==='w')playerBuyUpg('def');
     else if(k==='f')playerAgeUp();
     else if(k==='v')cycleSpeed();
     else if(k==='+'||k==='=')cycleSpeed(1);
