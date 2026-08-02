@@ -228,6 +228,12 @@ html,body{margin:0;padding:0;height:100%;overflow:hidden;background:#0d150f;
 #civpick-sub{margin:8px auto 18px;max-width:560px;font-family:var(--display);font-style:italic;
   font-size:13.5px;color:#cdbf97;letter-spacing:.03em}
 #civpick-note{margin:16px 0 2px;font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;color:#8d7f58}
+#diff-selector{display:flex;align-items:center;justify-content:center;gap:12px;margin:12px 0 4px}
+.diff-label{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:#8d7f58;font-family:var(--display)}
+.diff-btns{display:flex;gap:4px}
+.diff-btn{padding:4px 12px;font-size:11px;font-family:var(--display);letter-spacing:.08em}
+.diff-btn.active{border-color:var(--gold);background:linear-gradient(180deg,#8a6f2e,#5f4c17 55%,#4a3a10);color:var(--gold-hi);box-shadow:0 0 0 1px rgba(201,162,39,.45),0 2px 0 #100b03,0 4px 8px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,235,170,.25)}
+#diff-inline{font-size:10px;letter-spacing:.1em;color:#cdbf97;opacity:.8;margin-left:8px;white-space:nowrap}
 #civ-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
 @media (max-width:860px){ #civ-grid{grid-template-columns:repeat(2,1fr)} }
 .civ-card{position:relative;cursor:pointer;padding:12px 10px 10px;display:flex;flex-direction:column;
@@ -273,6 +279,7 @@ html,body{margin:0;padding:0;height:100%;overflow:hidden;background:#0d150f;
       <div class="res" id="res-gold" title="Oro"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.6" fill="#e0b64a" stroke="#8a6d1c" stroke-width="1.2"/><circle cx="8" cy="8" r="4.2" fill="none" stroke="#a8842a" stroke-width="1"/><path d="M6.2 5.6h3.6M8 5.6v5" stroke="#8a6d1c" stroke-width="1.1" stroke-linecap="round"/></svg><b class="rv" id="rv-gold">0</b><span class="rr" id="rr-gold">+0.0/s</span></div>
     </div>
     <div id="era-wrap">
+      <span id="diff-inline"></span>
       <div id="era">Edad Oscura</div>
       <button class="btn" id="agebtn" title="F">
         <span class="a-era">Avanzar a</span>
@@ -343,7 +350,11 @@ html,body{margin:0;padding:0;height:100%;overflow:hidden;background:#0d150f;
       <div class="srow"><span class="sl">Bajas en combate</span><span><b class="duel" id="s-lostP">0</b> &nbsp;—&nbsp; <b class="duel2" id="s-lostE">0</b></span></div>
       <div class="srow"><span class="sl">Edad alcanzada</span><span><b class="duel" id="s-ageP">I</b> &nbsp;—&nbsp; <b class="duel2" id="s-ageE">I</b></span></div>
       <div class="srow"><span class="sl">Civilización</span><span><b class="duel" id="s-civP">—</b> &nbsp;—&nbsp; <b class="duel2" id="s-civE">—</b></span></div>
+      <div class="srow"><span class="sl">Castillo restante</span><span><b class="duel" id="s-castleP">—</b> &nbsp;—&nbsp; <b class="duel2" id="s-castleE">—</b></span></div>
+      <div class="srow"><span class="sl">Forja/Armadura</span><span><b class="duel" id="s-upgP">0/0</b> &nbsp;—&nbsp; <b class="duel2" id="s-upgE">0/0</b></span></div>
+      <div class="srow"><span class="sl">Motores</span><span><b class="duel" id="s-engP">0</b> &nbsp;—&nbsp; <b class="duel2" id="s-engE">0</b></span></div>
       <div class="srow"><span class="sl">Duración de la contienda</span><b id="s-time">0:00</b></div>
+      <div class="srow"><span class="sl">Dificultad</span><b id="s-diff">Normal</b></div>
     </div>
     <div class="over-btns">
       <button class="btn" id="btn-restart">Luchar de nuevo</button>
@@ -358,6 +369,7 @@ html,body{margin:0;padding:0;height:100%;overflow:hidden;background:#0d150f;
     <h1 id="civpick-title">Elige tu casa</h1>
     <p id="civpick-sub">Ocho grandes casas se disputan el valle, cada una con su unidad única y su doctrina de guerra.</p>
     <div id="civ-grid"></div>
+    <div id="diff-selector"><span class="diff-label">Dificultad:</span><div class="diff-btns" id="diff-btns"></div></div>
     <p id="civpick-note">El rival escogerá la suya al azar · también puedes pulsar 1–8</p>
   </div>
 </div>
@@ -376,7 +388,7 @@ const AGES=[
   {name:'Edad Imperial', num:'IV', cost:{food:850,gold:380}}
 ];
 const AGE_UNLOCK={1:['Arqueros y Jinete Ligero','ingresos +25%'],2:['Caballero, Ballestero y Mangonel','veteranía: +25% daño y vidas'],3:['Élite, Arcabucero y Bombarda','veteranía: +25% daño y vidas']};
-const AGE_TIME=8, CASTLE_HP=2000, QUEUE_CAP=6, ENG_CAP=8, SIDE_CAP=42, AI_EFF=1.0;
+const AGE_TIME=8, CASTLE_HP=2000, QUEUE_CAP=6, ENG_CAP=8, SIDE_CAP=42;
 const castleMaxHp=side=>CASTLE_HP*(1+0.12*S.sides[side].age);
 const BASE_INCOME={food:4.5, wood:2.5, gold:1.8};
 const ENGINES={
@@ -445,6 +457,13 @@ const WORKER_HP=26, WORKER_RESPAWN=6.5;
 const AI_MIN_AGE_T=[0,55,170,450];
 const AI_TRAIN_INT=[10,7.5,6.5,5.5];
 const AI_ARMY_TARGET=[5,7,9,12];
+/* ---- Dificultad: escala la economía, cadencia, ejército y edades de la IA ---- */
+const DIFF=[
+  {name:'Fácil',   eff:0.78, trainMul:1.35, armyMul:0.75, ageMul:1.25, upgCad:9},
+  {name:'Normal',  eff:1.00, trainMul:1.00, armyMul:1.00, ageMul:1.00, upgCad:6},
+  {name:'Difícil', eff:1.22, trainMul:0.80, armyMul:1.25, ageMul:0.85, upgCad:5},
+  {name:'Extremo', eff:1.50, trainMul:0.62, armyMul:1.50, ageMul:0.72, upgCad:4}
+];
 /* Doctrina de counters (fiel a AoE4): arcos→lanzas, caballería→arcos y economía,
    lanzas→caballería, ballesta/pólvora→pesados, caballería→máquinas de asedio. */
 const COUNTER_OF={archer:'scout', crossbow:'knight', lancer:'crossbow', handcan:'knight',
@@ -463,6 +482,7 @@ const fmtT=s=>Math.floor(s/60)+':'+String(Math.floor(s%60)).padStart(2,'0');
 let S=null;
 let muted=false; // preferencia de silencio: persiste entre partidas (tecla M)
 let gameSpeed=1; // ritmo de partida x1/x2/x4 (tecla V o +/−)
+let difficulty=1; // índice en DIFF (Normal por defecto)
 const SPEEDS=[1,2,4];
 function setSpeed(v){
   v=SPEEDS.includes(v)?v:1;
@@ -480,7 +500,7 @@ function newSide(){
   return {res:{food:150,wood:120,gold:100}, eng:{farm:0,wood:0,mine:0},
     workers:{farm:{alive:0,max:0,hp:0,rt:0}, wood:{alive:0,max:0,hp:0,rt:0}, mine:{alive:0,max:0,hp:0,rt:0}},
     lastRaid:{food:-99,wood:-99,gold:-99},
-    age:0, aging:false, ageT:0, queue:[], stats:{trained:0,lost:0}, castleHp:CASTLE_HP, upg:{atk:0,def:0}};
+    age:0, aging:false, ageT:0, queue:[], stats:{trained:0,lost:0,gathered:0}, castleHp:CASTLE_HP, upg:{atk:0,def:0}};
 }
 function newGame(pCiv,eCiv){
   S={t:0, over:false, winner:null, overT:0, shownOver:false, shake:0,
@@ -527,7 +547,6 @@ function incomeOf(side,res){
     r+=s.eng[k]*ENGINES[k].rate*ratio;
   }
   r*=CUM[s.age];
-  if(side==='E')r*=AI_EFF;
   return r;
 }
 function addEngine(side,k){
@@ -537,7 +556,10 @@ function addEngine(side,k){
 function economyTick(dt){
   for(const side of ['P','E']){
     const s=S.sides[side];
-    for(const res of ['food','wood','gold'])s.res[res]+=incomeOf(side,res)*dt;
+    const eff=(side==='E'?DIFF[difficulty].eff:1);
+    let totalInc=0;
+    for(const res of ['food','wood','gold']){const inc=incomeOf(side,res)*dt*eff;s.res[res]+=inc;totalInc+=inc;}
+    s.stats.gathered+=totalInc;
     // los aldeanos caídos vuelven al tajo poco a poco (el raideo es un parón, no un borrado)
     for(const k in ENGINES){
       const w=s.workers[k];
@@ -962,18 +984,19 @@ function aiTick(dt){
   if(S.aiThinkT>0)return;
   S.aiThinkT=0.7;
   const e=S.sides.E;
+  const D=DIFF[difficulty]; // multiplicadores de dificultad
   // 1) avanzar de edad con timings propios
-  if(!e.aging&&e.age<3&&S.t>AI_MIN_AGE_T[e.age+1]&&canAfford('E',AGES[e.age+1].cost)){
+  if(!e.aging&&e.age<3&&S.t>AI_MIN_AGE_T[e.age+1]*D.ageMul&&canAfford('E',AGES[e.age+1].cost)){
     pay('E',AGES[e.age+1].cost); e.aging=true; e.ageT=AGE_TIME;
   }
   // reserva para la siguiente edad: la IA ahorra como un humano y no se lo funde todo en motores
   const reserve={food:0,wood:0,gold:0};
   const next=e.age+1;
   let urgent=false;
-  if(!e.aging&&next<4&&S.t>AI_MIN_AGE_T[next]*0.6){
+  if(!e.aging&&next<4&&S.t>AI_MIN_AGE_T[next]*D.ageMul*0.6){
     const ac=AGES[next].cost;
     for(const k in ac)reserve[k]=ac[k];
-    urgent=S.t>AI_MIN_AGE_T[next]*1.4; // retrasada: la edad pasa a ser prioridad absoluta
+    urgent=S.t>AI_MIN_AGE_T[next]*D.ageMul*1.4; // retrasada: la edad pasa a ser prioridad absoluta
   }
   // 2) economía: refuerza el motor más atrasado, con cadencia y sin pisar la reserva
   if(S.aiEngT<=0&&!urgent){
@@ -994,7 +1017,7 @@ function aiTick(dt){
   const roster=rosterFor(e.civ);
   const cnt={};
   for(const t of UNIT_ORDER)cnt[t]=0;
-  for(const t of S.playerRecent){const ck=counterKey(t);if(cnt[ck]!==undefined)cnt[ck]++;}
+  for(let i=0;i<S.playerRecent.length;i++){const t=S.playerRecent[i];const ck=counterKey(t);if(cnt[ck]!==undefined)cnt[ck]+=1+i*0.15;if(t==='mangonel'||t==='bombard')cnt.scout+=2+i*0.3;}
   let top=null,tm=0;
   for(const k in cnt)if(cnt[k]>tm){tm=cnt[k];top=k;}
   if(S.aiAlarm>0&&e.age>=0){
@@ -1015,7 +1038,7 @@ function aiTick(dt){
   // 4b) mejoras de herrería: la IA también invierte en forja y armadura
   S.aiUpgT-=dt;
   if(S.aiUpgT<=0){
-    S.aiUpgT=6;
+    S.aiUpgT=D.upgCad;
     const first = S.aiAlarm>0 ? 'def' : 'atk';
     const second = first==='atk' ? 'def' : 'atk';
     aiTryUpg(first, reserve) || aiTryUpg(second, reserve);
@@ -1023,7 +1046,13 @@ function aiTick(dt){
   // 4) entrenar sin vaciar la reserva de la edad y con plantillas por edad (como un humano:
   //    no infinita carne de cañón; consolida un ejército y presiona con él)
   const armyNow=armyCount('E')+queueLen('E');
-  if(S.aiTrainT<=0&&queueLen('E')<5&&armyNow<AI_ARMY_TARGET[e.age]){
+  const armyTarget=Math.round(AI_ARMY_TARGET[e.age]*D.armyMul);
+  // No monotema: si la IA lleva varias iguales en cola, fuerza variedad
+  if(!S.aiPlan||(e.queue.length>=2&&e.queue.every(q=>q.type===e.queue[0].type)&&e.queue[0].type===S.aiPlan)){
+    const alts=roster.filter(t=>t!==S.aiPlan);
+    if(alts.length>0)S.aiPlan=alts[Math.random()*alts.length|0];
+  }
+  if(S.aiTrainT<=0&&queueLen('E')<5&&armyNow<armyTarget){
     const tryOrder=[S.aiPlan];
     for(const t of roster)if(t!==S.aiPlan)tryOrder.push(t);
     let done=false;
@@ -1034,7 +1063,7 @@ function aiTick(dt){
       for(const k in cost)if(e.res[k]<cost[k]+reserve[k]*(urgent?0.95:0.5)){ok=false;break;}
       if(ok){trainSide('E',t);done=true;break;}
     }
-    S.aiTrainT=AI_TRAIN_INT[e.age]*rr(0.85,1.15)*(done?1:0.5);
+    S.aiTrainT=AI_TRAIN_INT[e.age]*D.trainMul*rr(0.85,1.15)*(done?1:0.5);
   }
 }
 
@@ -1172,7 +1201,14 @@ function showOver(){
   el.sAgeP.textContent=AGES[P.age].num;   el.sAgeE.textContent=AGES[E.age].num;
   el.sCivP.textContent=P.civ?CIVS[P.civ].name:'Clásica';
   el.sCivE.textContent=E.civ?CIVS[E.civ].name:'Clásica';
+  el.sCastleP.textContent=Math.floor(P.castleHp)+'/'+Math.floor(castleMaxHp('P'));
+  el.sCastleE.textContent=Math.floor(E.castleHp)+'/'+Math.floor(castleMaxHp('E'));
+  el.sUpgP.textContent=P.upg.atk+'/'+P.upg.def;
+  el.sUpgE.textContent=E.upg.atk+'/'+E.upg.def;
+  el.sEngP.textContent=P.eng.farm+P.eng.wood+P.eng.mine;
+  el.sEngE.textContent=E.eng.farm+E.eng.wood+E.eng.mine;
   el.sTime.textContent=fmtT(S.t);
+  el.sDiff.textContent=DIFF[difficulty].name;
   if(win)Snd.win();else Snd.lose();
 }
 function restart(){
@@ -1196,6 +1232,8 @@ globalThis.GAME={
   },
   buyEngine, ageUp:playerAgeUp, buyUpg:k=>playerBuyUpg(k), restart,
   setSpeed:v=>setSpeed(v), cycleSpeed:dir=>cycleSpeed(dir), getSpeed:()=>gameSpeed,
+  setDifficulty:n=>{difficulty=clamp(n|0,0,3);},
+  getDifficulty:()=>difficulty,
   setVolume:v=>Snd.setVolume(v), getVolume:()=>Snd.getVolume(),
   _geo:()=>({W,H,horizon:horizonY(),lane:laneY(),cW:castleW(),cH:castleH(),
     baseY:castleBaseY(),frontP:castleFrontX('P'),frontE:castleFrontX('E'),
@@ -1233,6 +1271,7 @@ globalThis.GAME={
       pTrained:P.stats.trained,eTrained:E.stats.trained,
       pLost:P.stats.lost,eLost:E.stats.lost,
       pCastle:P.castleHp,eCastle:E.castleHp,
+      pGathered:P.stats.gathered,eGathered:E.stats.gathered,
       resSum:P.res.food+P.res.wood+P.res.gold,
       pAge:P.age,eAge:E.age,engSum:P.eng.farm+P.eng.wood+P.eng.mine,
       castleMax:castleMaxHp('P'),castleMaxE:castleMaxHp('E')};
@@ -1944,6 +1983,21 @@ function buildCivGrid(){
     card.addEventListener('click',()=>startWithCiv(id));
     g.appendChild(card);
   });
+  buildDiffSelector();
+}
+function buildDiffSelector(){
+  el.diffBtns.innerHTML='';
+  DIFF.forEach((d,i)=>{
+    const b=document.createElement('button');
+    b.className='btn diff-btn'+(i===difficulty?' active':'');
+    b.textContent=d.name;
+    b.addEventListener('click',()=>setDiff(i));
+    el.diffBtns.appendChild(b);
+  });
+}
+function setDiff(n){
+  difficulty=clamp(n|0,0,3);
+  el.diffBtns.querySelectorAll('.diff-btn').forEach((b,i)=>b.classList.toggle('active',i===difficulty));
 }
 function startWithCiv(pCiv){
   if(!el.civpick.classList.contains('show'))return;
@@ -2067,6 +2121,9 @@ function cacheDom(){
   el.pIco=$('p-ico');el.eIco=$('e-ico');el.pCiv=$('p-civ');el.eCiv=$('e-civ');
   el.civpick=$('civpick');el.civGrid=$('civ-grid');
   el.sCivP=$('s-civP');el.sCivE=$('s-civE');el.btnCivpick=$('btn-civpick');
+  el.sCastleP=$('s-castleP');el.sCastleE=$('s-castleE');el.sUpgP=$('s-upgP');el.sUpgE=$('s-upgE');
+  el.sEngP=$('s-engP');el.sEngE=$('s-engE');el.sDiff=$('s-diff');
+  el.diffInline=$('diff-inline');el.diffBtns=$('diff-btns');
   el.era=$('era');el.toast=$('toast');
   el.rv={food:$('rv-food'),wood:$('rv-wood'),gold:$('rv-gold')};
   el.rr={food:$('rr-food'),wood:$('rr-wood'),gold:$('rr-gold')};
@@ -2116,6 +2173,7 @@ function uiTick(){
     // la tasa se tiñe de rojo mientras dura el saqueo de ese recurso
     el.resBox[r].classList.toggle('raided',S.t-P.lastRaid[r]<2.5);
   }
+  el.diffInline.textContent=DIFF[difficulty].name;
   el.era.textContent=AGES[P.age].num+' · '+AGES[P.age].name+(P.aging?' — avanzando…':'');
   el.pAge.textContent=AGES[P.age].name;
   el.eAge.textContent=AGES[E.age].name;
