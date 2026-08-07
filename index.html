@@ -262,6 +262,47 @@ html,body{margin:0;padding:0;height:100%;overflow:hidden;background:#0d150f;
 @media (max-width:900px){ .eng-rate{display:none} .house-age{display:none} #era{display:none}
   .u-icowrap{width:20px;height:20px} .u-name{font-size:9.5px} .ukbd{display:none}
   .house .ico{width:24px;height:27px} }
+
+/* ===== CODEX DEL VALLE (manual vivo del juego) ===== */
+#codex{position:absolute;inset:0;z-index:12;display:none;align-items:center;justify-content:center;overflow:auto;
+  background:radial-gradient(ellipse at 50% 38%,rgba(20,28,15,.88),rgba(6,9,5,.97))}
+#codex.show{display:flex}
+#codex-panel{width:min(940px,94vw);max-height:88vh;display:flex;flex-direction:column;padding:18px 26px 20px;margin:18px 0;
+  text-align:left;background:linear-gradient(180deg,#232d1c,#141a10 70%,#0f140b);
+  border:3px double var(--gold);box-shadow:0 24px 70px rgba(0,0,0,.85),inset 0 0 60px rgba(0,0,0,.5);
+  clip-path:polygon(16px 0,calc(100% - 16px) 0,100% 16px,100% calc(100% - 16px),calc(100% - 16px) 100%,16px 100%,0 calc(100% - 16px),0 16px)}
+#codex-head{display:flex;align-items:center;justify-content:space-between;gap:10px}
+#codex-title{margin:4px 0 2px;font-family:var(--display);font-weight:700;font-size:clamp(26px,4vw,40px);
+  letter-spacing:.14em;font-variant-caps:small-caps;color:#f0d06e;text-shadow:0 3px 0 #4a3608,0 8px 22px #000}
+#codex-x{flex:none;width:34px;height:34px;font-family:var(--display);font-size:16px;line-height:1;color:var(--gold-hi);padding:0}
+#codex-tabs{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}
+.cx-tab{padding:5px 14px;font-family:var(--display);font-size:12.5px;letter-spacing:.1em;font-variant-caps:small-caps}
+.cx-tab.active{border-color:var(--gold);background:linear-gradient(180deg,#8a6f2e,#5f4c17 55%,#4a3a10);color:var(--gold-hi);
+  box-shadow:0 0 0 1px rgba(201,162,39,.45),0 2px 0 #100b03,0 4px 8px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,235,170,.25)}
+#codex-body{overflow-y:auto;padding-right:6px;display:flex;flex-direction:column;gap:6px;scrollbar-width:thin;
+  scrollbar-color:rgba(201,162,39,.5) rgba(0,0,0,.28)}
+#codex-body::-webkit-scrollbar{width:6px}
+#codex-body::-webkit-scrollbar-track{background:rgba(0,0,0,.28);border-radius:3px}
+#codex-body::-webkit-scrollbar-thumb{background:rgba(201,162,39,.5);border-radius:3px}
+.cx-h{margin:8px 0 2px;font-family:var(--display);font-size:12px;font-weight:700;letter-spacing:.22em;
+  text-transform:uppercase;color:var(--gold-hi);border-bottom:1px solid rgba(201,162,39,.35);padding-bottom:3px}
+.cx-card{padding:7px 10px;border:1px solid #171106;border-top-color:#7c6738;border-radius:4px;
+  background:linear-gradient(180deg,rgba(0,0,0,.26),rgba(0,0,0,.12));display:flex;flex-direction:column;gap:3px}
+.cx-row{display:flex;align-items:center;gap:10px;padding:4px 2px;border-bottom:1px dotted rgba(201,162,39,.2)}
+.cx-row:last-child{border-bottom:none}
+.cx-uico{width:30px;height:30px;flex:none}
+.cx-uico svg{width:100%;height:100%;display:block;filter:drop-shadow(0 2px 2px rgba(0,0,0,.55))}
+.cx-ut{display:flex;flex-direction:column;gap:1px;min-width:0}
+.cx-ut b{font-family:var(--display);font-size:13px;letter-spacing:.05em;color:#f5e9c4;line-height:1.15}
+.cx-sub{font-size:10px;color:#b7a97e;letter-spacing:.05em}
+.cx-tags{color:#a9c695}
+.cx-cost{margin-left:auto;display:flex;gap:6px;font-size:10.5px;flex:none;color:#f0e3ba}
+.cx-stats{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:10.5px;color:#cdbf97}
+.cx-strong{font-size:10px;color:#a9c695;font-style:italic}
+.cx-banner{width:26px;height:30px;border:1px solid rgba(201,162,39,.5);border-radius:2px;flex:none;box-shadow:0 2px 4px rgba(0,0,0,.5)}
+.cx-note{font-size:10.5px;font-style:italic;color:#cdbf97;letter-spacing:.04em;margin:0 0 4px}
+.cx-num{flex:none;min-width:26px;font-family:var(--display);font-weight:700;font-size:12px;color:var(--gold-hi);text-align:center}
+#codex-open{display:flex;justify-content:center;margin:12px 0 0}
 </style>
 </head>
 <body>
@@ -335,9 +376,13 @@ html,body{margin:0;padding:0;height:100%;overflow:hidden;background:#0d150f;
     <button class="btn" id="speedbtn" title="V para alternar, +/− para ajustar"><span id="speedlbl">x1</span></button>
     <div id="vol-wrap"><label id="vol-ico">🔊</label><input type="range" id="vol-slider" min="0" max="100" value="80"></div>
   </section>
+  <section class="dock-sec" id="codex-sec">
+    <div class="sec-title">Codex<i class="sec-hint">C</i></div>
+    <button class="btn" id="codexbtn" title="C para abrir el Codex"><span id="codexlbl">El Codex</span></button>
+  </section>
 </footer>
 
-<div id="hint">1–9 reclutar · F edad · Q/W mejoras · V / + / − ritmo · M silencio · la caballería raidea economía rival</div>
+<div id="hint">1–9 reclutar · F edad · Q/W mejoras · V / + / − ritmo · M silencio · C codex · la caballería raidea economía rival</div>
 <div id="toast"></div>
 
 <div id="overlay">
@@ -370,7 +415,19 @@ html,body{margin:0;padding:0;height:100%;overflow:hidden;background:#0d150f;
     <p id="civpick-sub">Ocho grandes casas se disputan el valle, cada una con su unidad única y su doctrina de guerra.</p>
     <div id="civ-grid"></div>
     <div id="diff-selector"><span class="diff-label">Dificultad:</span><div class="diff-btns" id="diff-btns"></div></div>
+    <div id="codex-open"><button class="btn btn-alt" id="codexbtn-civpick">Consultar el Codex</button></div>
     <p id="civpick-note">El rival escogerá la suya al azar · también puedes pulsar 1–8</p>
+  </div>
+</div>
+
+<div id="codex">
+  <div id="codex-panel">
+    <div id="codex-head">
+      <h1 id="codex-title">El Codex del Valle</h1>
+      <button class="btn" id="codex-x" title="Cerrar (C / Esc)">&#215;</button>
+    </div>
+    <div id="codex-tabs"></div>
+    <div id="codex-body"></div>
   </div>
 </div>
 <script>
@@ -522,6 +579,7 @@ function newGame(pCiv,eCiv){
     ?'Heraldo: «¡A las armas! Los '+CIVS[S.sides.E.civ].name+' de Casa Vermell codician este valle.»'
     :'Heraldo: «¡A las armas! Casa Vermell codicia este valle.»','gold');
   if(S.sides.P.civ)heraldSay('Vuestra doctrina: '+CIVS[S.sides.P.civ].bonus+'. Unidad única: '+UNITS[CIVS[S.sides.P.civ].unit].name+'.','');
+  Mus.start();
 }
 /* Coste efectivo de una unidad con la doctrina de la civ aplicada */
 function unitCost(side,type){
@@ -567,7 +625,7 @@ function economyTick(dt){
         w.rt+=dt;
         if(w.rt>=WORKER_RESPAWN){
           w.rt=0; w.alive++; w.hp+=WORKER_HP;
-          if(side==='P'){const nd=nodePos(k,'P');S.rings.push({x:nd.x,y:nd.y+8,t:0.5});}
+          if(side==='P'){const nd=nodePos(k,'P');S.rings.push({x:nd.x,y:nd.y+8,t:0.5});Snd.coin();}
         }
       }else w.rt=0;
     }
@@ -658,7 +716,7 @@ function queueTick(dt){
     const q=S.sides[side].queue;
     if(!q.length)continue;
     const it=q[0]; it.t-=dt;
-    if(it.t<=0){q.shift();spawnUnit(side,it.type);}
+    if(it.t<=0){q.shift();spawnUnit(side,it.type);if(side==='P')Snd.trainDone();}
   }
 }
 function spawnUnit(side,type){
@@ -857,6 +915,7 @@ function attackCastle(u){
     S.arrows.push({x:u.x,y:laneY()+u.y0-24,sx:u.x,tx:fx,ty:y,t:0,dur:0.4,side:u.side,rock:def.siege});
     if(def.siege)boomSnd();else arrowSnd();
   }else hitSnd(0.05);
+  if(target==='P')Snd.castleHit();
   S.nums.push({x:fx+rr(-8,8),y,t:0.8,v:dmg,castle:true});
   dust(fx,y);
   if(def.castleBonus){
@@ -1076,7 +1135,7 @@ function aiTryUpg(k,reserve){
 }
 /* ---- Sonido (WebAudio sintetizado, sin archivos) ---- */
 const Snd={
-  ctx:null,lastHit:0,lastArrow:0,lastBoom:0,vol:0.8,master:null,
+  ctx:null,lastHit:0,lastArrow:0,lastBoom:0,lastCoin:0,lastCastle:0,vol:0.8,master:null,
   ensure(){
     if(!this.ctx){
       const AC=window.AudioContext||window.webkitAudioContext;
@@ -1090,7 +1149,7 @@ const Snd={
     }
     if(this.ctx.state==='suspended')this.ctx.resume();
   },
-  setVolume(v){this.vol=clamp(v,0,1);if(this.master)this.master.gain.value=this.vol;},
+  setVolume(v){this.vol=clamp(v,0,1);if(this.master)this.master.gain.value=this.vol;if(typeof Mus!=='undefined')Mus.vol();},
   getVolume(){return this.vol;},
   tone(o){
     if(muted)return;
@@ -1144,7 +1203,122 @@ const Snd={
   },
   win(){[523,659,784,1046,1318].forEach((f,i)=>this.tone({f,dur:0.5,type:'triangle',vol:0.11,delay:i*0.16}));
         this.bell(1046,0.10);},
-  lose(){[330,262,220,165].forEach((f,i)=>this.tone({f,dur:0.7,type:'sawtooth',vol:0.07,delay:i*0.24}));}
+  lose(){[330,262,220,165].forEach((f,i)=>this.tone({f,dur:0.7,type:'sawtooth',vol:0.07,delay:i*0.24}));},
+  coin(){const n=performance.now();if(n-this.lastCoin<140)return;this.lastCoin=n;
+        this.tone({f:880,f2:1320,dur:0.11,type:'triangle',vol:0.09});
+        this.tone({f:1320,f2:1760,dur:0.16,type:'triangle',vol:0.07,delay:0.07});},
+  build(){this.noise(0.1,0.07);this.tone({f:180,f2:85,dur:0.18,type:'triangle',vol:0.13});
+        this.tone({f:560,f2:430,dur:0.12,type:'square',vol:0.045,delay:0.06});},
+  castleHit(){const n=performance.now();if(n-this.lastCastle<160)return;this.lastCastle=n;
+        this.noise(0.22,0.16);this.tone({f:92,f2:42,dur:0.32,type:'sine',vol:0.2});},
+  trainDone(){this.tone({f:392,f2:523,dur:0.1,type:'triangle',vol:0.08});
+        this.tone({f:523,f2:659,dur:0.14,type:'triangle',vol:0.07,delay:0.1});}
+};
+/* ---- Musica (bucle medieval procedimental: dron modal + timbal + laud) ----
+   El scheduler avanza con ctx.currentTime (lookahead 1.5s) desde frame() via
+   requestAnimationFrame; NUNCA usa setTimeout. Sin AudioContext -> no-op
+   silencioso (seguro en entornos headless). El volumen propio es
+   Snd.getVolume()*0.4 y respeta la tecla M (muted). */
+const MUS_CHORDS=[
+  {bass:146.83,notes:[293.66,440.00]},
+  {bass:130.81,notes:[261.63,392.00,523.25]},
+  {bass:174.61,notes:[349.23,440.00,523.25]},
+  {bass:98.00, notes:[196.00,233.08,293.66]}
+];
+const MUS_SPB=[0.91,0.79,0.68]; // segundos por pulso (66/76/88 bpm) segun intensidad
+const Mus={
+  ctx:null,master:null,on:false,bar:0,b:0,nextT:0,guard:48,
+  ensure(){
+    if(!this.ctx){
+      const AC=window.AudioContext||window.webkitAudioContext;
+      if(!AC)return;
+      try{this.ctx=new AC();}catch(e){return;}
+    }
+    if(!this.master){
+      this.master=this.ctx.createGain();
+      this.master.gain.value=0.0001;
+      this.master.connect(this.ctx.destination);
+      this.vol();
+    }
+    if(this.ctx.state==='suspended')this.ctx.resume();
+  },
+  level(){
+    if(!S||!S.sides)return 1;
+    const a=(S.sides.P.age+S.sides.E.age)/2;
+    return a<1.25?1:a<2.5?2:3;
+  },
+  spb(){return MUS_SPB[this.level()-1];},
+  start(){
+    this.on=true;
+    this.ensure();
+    if(!this.ctx)return;
+    this.bar=0;this.b=0;
+    this.nextT=this.ctx.currentTime+0.06;
+    this.vol();
+  },
+  stop(){
+    this.on=false;
+    if(!this.ctx||!this.master)return;
+    const t=this.ctx.currentTime;
+    try{
+      this.master.gain.cancelScheduledValues(t);
+      this.master.gain.setValueAtTime(Math.max(0.0001,this.master.gain.value),t);
+      this.master.gain.exponentialRampToValueAtTime(0.0001,t+0.5);
+    }catch(e){}
+  },
+  vol(){
+    if(!this.master||!this.ctx)return;
+    const t=this.ctx.currentTime;
+    const v=(muted||!this.on)?0.0001:Math.max(0.0001,Snd.getVolume()*0.4);
+    try{
+      this.master.gain.cancelScheduledValues(t);
+      this.master.gain.setValueAtTime(v,t);
+    }catch(e){}
+  },
+  note(f,dur,type,vol,at){ // nota programada 'at' segundos desde ahora
+    if(muted||!this.ctx||!this.master)return;
+    const t0=this.ctx.currentTime+at;
+    const os=this.ctx.createOscillator(), g=this.ctx.createGain();
+    os.type=type||'triangle';
+    os.frequency.setValueAtTime(f,t0);
+    g.gain.setValueAtTime(0.0001,t0);
+    g.gain.exponentialRampToValueAtTime(vol,t0+0.03);
+    g.gain.exponentialRampToValueAtTime(0.0001,t0+dur);
+    os.connect(g);g.connect(this.master);
+    os.start(t0);os.stop(t0+dur+0.03);
+  },
+  schedule(){
+    if(!this.on||!this.ctx)return;
+    const c=this.ctx;
+    const spb=this.spb();
+    const lv=this.level();
+    while(this.nextT<c.currentTime+1.5&&this.guard>0){
+      this.guard--;
+      const ch=MUS_CHORDS[this.bar%MUS_CHORDS.length];
+      const b=this.b;
+      const at=this.nextT-c.currentTime;
+      // dron: bajo + pad al empezar cada compas (4 pulsos)
+      if(b%4===0){
+        this.note(ch.bass*2,spb*4.2,'sine',0.045,at);
+        ch.notes.forEach((f,i)=>this.note(f,spb*4.2,'triangle',0.014,at+0.02+i*0.01));
+      }
+      // timbal en el pulso fuerte y (si la intensidad sube) en el contratiempo
+      if(b%8===0||(lv>=2&&b%8===4)){
+        this.note(ch.bass*1.5,0.22,'sine',0.12,at);
+        this.note(ch.bass*0.6,0.42,'sine',0.1,at+0.1);
+      }
+      // laud: arpegio (la densidad crece con la intensidad)
+      if(lv>=2||b%4===2){
+        const a=ch.notes, idx=b%a.length;
+        this.note(a[idx],0.5,'triangle',0.03,at);
+        if(lv>=3&&b%2===1)this.note(a[(idx+1)%a.length],0.32,'triangle',0.022,at+0.18);
+      }
+      this.b++;
+      if(this.b%4===0)this.bar++;
+      this.nextT+=spb;
+    }
+    this.guard=48;
+  }
 };
 function hitSnd(){Snd.hit();}
 function arrowSnd(){Snd.arrow();}
@@ -1170,7 +1344,7 @@ function buyEngine(k){
   if(!canAfford('P',{[ENGINES[k].costRes]:c})){denyRes({[ENGINES[k].costRes]:c});Snd.thud();return;}
   pay('P',{[ENGINES[k].costRes]:c});
   addEngine('P',k);
-  Snd.click();
+  Snd.build();
   if(s.eng[k]===1)heraldSay(ENGINES[k].name+' levantada: los aldeanos acuden a faenar.','');
 }
 function denyPulse(node){
@@ -1190,6 +1364,7 @@ function overShown(v){
   el.overlay.classList.remove('win','lose');
 }
 function showOver(){
+  Mus.stop();
   const P=S.sides.P,E=S.sides.E,win=S.winner==='P';
   el.overlay.classList.add('show',win?'win':'lose');
   el.overTitle.textContent=win?'VICTORIA':'DERROTA';
@@ -1212,10 +1387,12 @@ function showOver(){
   if(win)Snd.win();else Snd.lose();
 }
 function restart(){
+  Mus.stop();
   newGame(S.sides.P.civ,S.sides.E.civ);
   Snd.click();
 }
 function backToCivPick(){
+  Mus.stop();
   overShown(false);
   el.civpick.classList.add('show');
   Snd.click();
@@ -2108,6 +2285,124 @@ function buildArmyDock(){
   }
 }
 
+/* ---- Codex del Valle: manual vivo construido desde las constantes del juego ---- */
+const CODEX_TABS=[['units','Unidades'],['tech','Tecnologías'],['civs','Civilizaciones'],['counters','Contadores']];
+let codexTab='units';
+const KIND_LABEL={spear:'Lanza',bow:'Arco',lightcav:'Cab. ligera',xbow:'Ballesta',gun:'Pólvora',
+  cav:'Caballería',elitecav:'Cab. de élite',horsebow:'Arquería montada',sword:'Espada',
+  mangonel:'Asedio',bombard:'Asedio pesado',elephant:'Elefante'};
+const BONUS_LABEL={cav:'caballería',ranged:'a distancia',heavy:'pesados',siege:'asedio',
+  lancer:'lanceros',knight:'caballeros',scout:'jinetes',crossbow:'ballesteros'};
+const RES_NAME={food:'Comida',wood:'Madera',gold:'Oro'};
+function codexCostHtml(cost){
+  let h='';
+  for(const k in cost)h+='<span class="cost"><b>'+cost[k]+'</b>'+RES_ICONS[k]+'</span>';
+  return h||'<span class="cost">—</span>';
+}
+function codexBonusHtml(bns){
+  if(!bns)return '';
+  const parts=Object.keys(bns).map(k=>BONUS_LABEL[k]||k).filter(Boolean);
+  return parts.length?'<span class="cx-strong">Fuerte vs '+parts.join(', ')+' (x'+Object.values(bns).join('/x')+')</span>':'';
+}
+function codexUnitCard(t){
+  const d=UNITS[t];
+  const tags=[];
+  if(d.ranged)tags.push('a distancia');
+  if(d.siege)tags.push('asedio');
+  if(d.raid)tags.push('raider');
+  if(d.mount&&!d.siege)tags.push('montada');
+  const tagHtml=tags.length?' <span class="cx-tags">'+tags.join(' · ')+'</span>':'';
+  return '<div class="cx-card">'+
+    '<div class="cx-row"><span class="cx-uico"><svg class="u-ico" viewBox="0 0 36 36" aria-hidden="true">'+(ICONS[t]||'')+'</svg></span>'+
+    '<span class="cx-ut"><b>'+d.name+'</b>'+(d.unique?'<i class="u-uniq">&#9733; única</i>':'')+
+    '<span class="cx-sub">'+AGES[d.age].num+' · '+(KIND_LABEL[d.kind]||d.kind)+tagHtml+'</span></span>'+
+    '<span class="cx-cost">'+codexCostHtml(d.cost)+'</span></div>'+
+    '<div class="cx-row cx-stats"><span>Vida '+d.hp+'</span><span>Daño '+d.dmg+'</span>'+
+    '<span>Alcance '+d.range+'</span><span>Velocidad '+d.spd+'</span><span>Recluta '+d.train.toFixed(1)+'s</span>'+
+    (d.cd?'<span>Cadencia '+d.cd.toFixed(2)+'s</span>':'')+'</div>'+codexBonusHtml(d.bonus)+'</div>';
+}
+function codexUnitsHtml(){
+  const std=UNIT_ORDER.map(codexUnitCard).join('');
+  const uniq=Object.keys(UNITS).filter(t=>UNITS[t].unique).map(codexUnitCard).join('');
+  return '<h3 class="cx-h">Roster clásico</h3>'+std+(uniq?'<h3 class="cx-h">Unidades únicas</h3>'+uniq:'');
+}
+function codexTechHtml(){
+  let ages='';
+  for(let i=0;i<AGES.length;i++){
+    const a=AGES[i],u=AGE_UNLOCK[i];
+    ages+='<div class="cx-row"><span class="cx-num">'+a.num+'</span>'+
+      '<span class="cx-ut"><b>'+a.name+'</b>'+(u?'<span class="cx-sub">'+u[0]+' · '+u[1]+'</span>':'')+'</span>'+
+      '<span class="cx-cost">'+(a.cost?codexCostHtml(a.cost):'<span class="cost">inicial</span>')+'</span></div>';
+  }
+  let herr='';
+  for(const k of ['atk','def']){
+    const u=UPG[k];
+    let rows='';
+    for(let l=0;l<u.max;l++){
+      rows+='<div class="cx-row"><span class="cx-num">Nv '+(l+1)+'</span>'+
+        '<span class="cx-ut">Requiere '+AGES[u.age[l]].name+'</span>'+
+        '<span class="cx-sub">+'+Math.round(u.step*100)+'%</span>'+
+        '<span class="cx-cost">'+codexCostHtml(u.cost[l])+'</span></div>';
+    }
+    herr+='<h4 class="cx-h">'+u.name+'</h4>'+rows;
+  }
+  let eng='';
+  for(const k in ENGINES){
+    const e=ENGINES[k];
+    eng+='<div class="cx-row"><span class="cx-ut"><b>'+e.name+'</b>'+
+      '<span class="cx-sub">+'+e.rate.toFixed(1)+' '+RES_NAME[e.res]+'/s por nivel · máximo 8</span></span>'+
+      '<span class="cx-cost">'+codexCostHtml({[e.costRes]:Math.round(e.base)})+'</span></div>';
+  }
+  return '<h3 class="cx-h">Edades</h3>'+ages+'<h3 class="cx-h">Herrería</h3>'+herr+'<h3 class="cx-h">Motores de economía</h3>'+eng;
+}
+function codexCivHtml(){
+  return CIV_ORDER.map(c=>{
+    const cv=CIVS[c],u=UNITS[cv.unit];
+    return '<div class="cx-card">'+
+      '<div class="cx-row"><span class="cx-banner" style="background:'+cv.field+'"></span>'+
+      '<span class="cx-ut"><b>'+cv.name+'</b><span class="cx-sub">'+cv.bDesc+'</span></span>'+
+      '<span class="cx-cost">Unidad única</span></div>'+
+      '<div class="cx-row"><span class="cx-sub">Doctrina: '+cv.bonus+'</span></div>'+
+      '<div class="cx-row cx-stats"><span>Vida '+u.hp+'</span><span>Daño '+u.dmg+'</span>'+
+      '<span>Alcance '+u.range+'</span><span>Velocidad '+u.spd+'</span><span>Recluta '+u.train.toFixed(1)+'s</span></div>'+
+      codexBonusHtml(u.bonus)+'</div>';
+  }).join('');
+}
+function codexCounterHtml(){
+  const rows=Object.keys(COUNTER_OF).map(t=>{
+    const counter=COUNTER_OF[t];
+    const variants=CIV_ORDER.map(c=>civUnitFor(c,counter)).filter((v,i,a)=>a.indexOf(v)===i).map(v=>UNITS[v].name).join(', ');
+    return '<div class="cx-row"><span class="cx-num">'+UNITS[t].name+'</span>'+
+      '<span class="cx-ut">Vulnerable a <b>'+UNITS[counter].name+'</b>'+
+      '<span class="cx-sub">variante por civ: '+variants+'</span></span></div>';
+  }).join('');
+  return '<p class="cx-note">Doctrina de contadores fiel a AoE4: los lanceros detienen la caballería, '+
+    'la ballesta y la pólvora rompen a los pesados, y la caballería ligera caza arqueros y máquinas de asedio.</p>'+rows;
+}
+function showCodexTab(id){
+  codexTab=id;
+  el.codexBody.innerHTML=id==='units'?codexUnitsHtml():id==='tech'?codexTechHtml():
+    id==='civs'?codexCivHtml():codexCounterHtml();
+  el.codexTabs.querySelectorAll('.cx-tab').forEach((b,i)=>b.classList.toggle('active',CODEX_TABS[i][0]===id));
+}
+function buildCodex(){
+  el.codexTabs.innerHTML='';
+  for(const t of CODEX_TABS){
+    const b=document.createElement('button');
+    b.className='btn cx-tab'+(t[0]===codexTab?' active':'');
+    b.textContent=t[1];
+    b.addEventListener('click',()=>showCodexTab(t[0]));
+    el.codexTabs.appendChild(b);
+  }
+  showCodexTab(codexTab);
+}
+function toggleCodex(force){
+  if(!el.codex)return;
+  const show=force===undefined?!el.codex.classList.contains('show'):force;
+  el.codex.classList.toggle('show',show);
+  Snd.click();
+}
+
 /* ---- UI (DOM) ---- */
 const el={};
 let heraldSig='~', toastUntil=0;
@@ -2125,6 +2420,8 @@ function cacheDom(){
   el.sEngP=$('s-engP');el.sEngE=$('s-engE');el.sDiff=$('s-diff');
   el.diffInline=$('diff-inline');el.diffBtns=$('diff-btns');
   el.era=$('era');el.toast=$('toast');
+  el.codex=$('codex');el.codexBody=$('codex-body');el.codexTabs=$('codex-tabs');
+  el.codexX=$('codex-x');el.codexBtn=$('codexbtn');el.codexBtnPick=$('codexbtn-civpick');
   el.rv={food:$('rv-food'),wood:$('rv-wood'),gold:$('rv-gold')};
   el.rr={food:$('rr-food'),wood:$('rr-wood'),gold:$('rr-gold')};
   el.resBox={food:$('res-food'),wood:$('res-wood'),gold:$('res-gold')};
@@ -2263,21 +2560,29 @@ function wire(){
   el.upgBtn.atk.addEventListener('click',()=>playerBuyUpg('atk'));
   el.upgBtn.def.addEventListener('click',()=>playerBuyUpg('def'));
   el.ageBtn.addEventListener('click',playerAgeUp);
+  el.codexBtn.addEventListener('click',()=>toggleCodex());
+  el.codexBtnPick.addEventListener('click',()=>toggleCodex());
+  el.codexX.addEventListener('click',()=>toggleCodex(false));
   el.speedBtn.addEventListener('click',()=>cycleSpeed());
   el.volSlider=document.getElementById('vol-slider');
   el.volSlider.addEventListener('input',()=>Snd.setVolume(el.volSlider.value/100));
   document.getElementById('btn-restart').addEventListener('click',restart);
   el.btnCivpick.addEventListener('click',backToCivPick);
-  addEventListener('pointerdown',()=>Snd.ensure());
+  addEventListener('pointerdown',()=>{Snd.ensure();Mus.ensure();});
   addEventListener('keydown',e=>{
     if(e.repeat)return;
     const k=(e.key||'').toLowerCase();
+    if(el.codex&&el.codex.classList.contains('show')){
+      if(k==='c'||k==='escape'||k==='x')toggleCodex(false);
+      return;
+    }
+    if(k==='c'){toggleCodex();return;}
     if(el.civpick.classList.contains('show')){
       // pantalla de selección: 1–8 eligen casa (los atajos de unidad NO aplican aquí)
       if(k>='1'&&k<='8')startWithCiv(CIV_ORDER[+k-1]);
       return;
     }
-    if(k==='m'){muted=!muted;toast(muted?'Silencio en el campamento':'Se oyen los tambores');}
+    if(k==='m'){muted=!muted;toast(muted?'Silencio en el campamento':'Se oyen los tambores');Mus.vol();}
     else if(k==='q')playerBuyUpg('atk');
     else if(k==='w')playerBuyUpg('def');
     else if(k==='f')playerAgeUp();
@@ -2314,6 +2619,7 @@ function frame(now){
   render();
   uiAcc+=dt*gameSpeed;
   if(uiAcc>=0.1){uiAcc=0;uiTick();}
+  Mus.schedule();
   ctx.restore();
   requestAnimationFrame(frame);
 }
@@ -2324,6 +2630,7 @@ wire();
 resize();
 buildCivGrid();
 newGame(null,null);
+buildCodex();
 el.civpick.classList.add('show'); // se juega tras elegir casa
 requestAnimationFrame(frame);
 
