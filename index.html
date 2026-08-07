@@ -516,7 +516,7 @@ const AI_TRAIN_INT=[10,7.5,6.5,5.5];
 const AI_ARMY_TARGET=[5,7,9,12];
 /* ---- Dificultad: escala la economía, cadencia, ejército y edades de la IA ---- */
 const DIFF=[
-  {name:'Fácil',   eff:0.78, trainMul:1.35, armyMul:0.75, ageMul:1.25, upgCad:9},
+  {name:'Fácil',   eff:0.62, trainMul:1.60, armyMul:0.55, ageMul:1.50, upgCad:12},
   {name:'Normal',  eff:1.00, trainMul:1.00, armyMul:1.00, ageMul:1.00, upgCad:6},
   {name:'Difícil', eff:1.22, trainMul:0.80, armyMul:1.25, ageMul:0.85, upgCad:5},
   {name:'Extremo', eff:1.50, trainMul:0.62, armyMul:1.50, ageMul:0.72, upgCad:4}
@@ -1442,6 +1442,8 @@ globalThis.GAME={
   _civ:side=>S.sides[side].civ,
   _roster:civ=>rosterFor(civ),
   _unitCost:(side,t)=>unitCost(side,t),
+  constData:()=>({AGES,UNITS,COUNTER_OF,CIVS,UNIT_ORDER,DIFF,ENGINES,UPG,
+    engCost:(k,lvl)=>engCost(k,lvl), counterKey, civUnitFor}),
   probe(){
     const P=S.sides.P,E=S.sides.E;
     return {over:S.over,winner:S.winner,t:S.t,
