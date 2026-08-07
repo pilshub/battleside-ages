@@ -4,7 +4,7 @@
   "description": "Mini-RTS auto-battler inspirado en **Age of Empires IV**. Elige tu civilización,\r desarrolla tu economía, avanza de edad, compone tu ejército y destruye el castillo\r rival. Todo en un único archivo, sin dependencias.",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node tools/bsa-harness.js smoke && node tools/dom-test.js"
   },
   "repository": {
     "type": "git",
@@ -18,7 +18,7 @@
     "url": "https://github.com/pilshub/battleside-ages/issues"
   },
   "homepage": "https://github.com/pilshub/battleside-ages#readme",
-  "dependencies": {
+  "devDependencies": {
     "jsdom": "^29.1.1"
   }
 }
