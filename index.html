@@ -107,6 +107,9 @@ html,body{margin:0;padding:0;height:100%;overflow:hidden;background:#0d150f;
 .btn.cant{filter:grayscale(.55) brightness(.68)}
 .btn.locked{filter:grayscale(.9) brightness(.5)}
 .btn.deny{animation:shake .3s}
+#formbtn.on{border-color:var(--gold);color:var(--gold-hi);
+  box-shadow:0 0 0 1px rgba(201,162,39,.5),0 2px 0 #100b03,0 4px 8px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,235,170,.3)}
+#formbtn.on::after{content:'·';}
 @keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-4px)}
   40%{transform:translateX(4px)}60%{transform:translateX(-3px)}80%{transform:translateX(3px)}}
 
@@ -162,6 +165,9 @@ html,body{margin:0;padding:0;height:100%;overflow:hidden;background:#0d150f;
 #agebtn.maxed{filter:grayscale(.4) brightness(.8);cursor:default}
 
 /* --- ritmo de partida (x1/x2/x4) --- */
+#form-sec{align-items:center;justify-content:center}
+#formbtn{min-width:56px;padding:5px 10px;font-family:var(--display);font-weight:700;
+  font-size:11px;letter-spacing:.04em;font-variant-caps:small-caps}
 #speed-sec{margin-left:auto;align-items:center;justify-content:center}
 #speedbtn{min-width:52px;padding:5px 12px;font-family:var(--display);font-weight:700;
   font-size:14px;letter-spacing:.06em;font-variant-numeric:tabular-nums}
@@ -371,6 +377,10 @@ html,body{margin:0;padding:0;height:100%;overflow:hidden;background:#0d150f;
       <button class="btn buy" id="upg-def"><span>Armadura</span><span class="pips" id="upg-def-pips"></span><span class="cost" id="upg-def-cost"></span></button>
     </div>
   </section>
+  <section class="dock-sec" id="form-sec">
+    <div class="sec-title">Formación<i class="sec-hint">G</i></div>
+    <button class="btn" id="formbtn" title="G para cambiar de formación"><span id="formlbl">Libre</span></button>
+  </section>
   <section class="dock-sec" id="speed-sec">
     <div class="sec-title">Ritmo<i class="sec-hint">V · +/−</i></div>
     <button class="btn" id="speedbtn" title="V para alternar, +/− para ajustar"><span id="speedlbl">x1</span></button>
@@ -382,7 +392,7 @@ html,body{margin:0;padding:0;height:100%;overflow:hidden;background:#0d150f;
   </section>
 </footer>
 
-<div id="hint">1–9 reclutar · F edad · Q/W mejoras · V / + / − ritmo · M silencio · C codex · la caballería raidea economía rival</div>
+<div id="hint">1–9 reclutar · F edad · Q/W mejoras · G formación · V / + / − ritmo · M silencio · C codex · la caballería raidea economía rival</div>
 <div id="toast"></div>
 
 <div id="overlay">
@@ -525,6 +535,16 @@ const DIFF=[
    lanzas→caballería, ballesta/pólvora→pesados, caballería→máquinas de asedio. */
 const COUNTER_OF={archer:'scout', crossbow:'knight', lancer:'crossbow', handcan:'knight',
   scout:'lancer', knight:'lancer', elite:'crossbow', mangonel:'scout', bombard:'scout'};
+/* ---- Formaciones: doctrina de marcha y combate para el ejército propio ----
+   Línea: frente amplio que aguanta el fuego (sobre todo de área); Horda: masa
+   compacta que golpea con más filo pero sufre las piedras del mangonel; Flanco:
+   columnas que rodean, con la caballería desbordando por los costados. */
+const FORMATIONS=[
+  {id:'libre', name:'Libre', hint:'sin doctrina: marcha estándar', spd:1, atk:1, def:1, splash:1, ySpread:16},
+  {id:'line',  name:'Línea', hint:'frente amplio, resiste el daño de área', spd:0.92, atk:1, def:0.90, splash:0.5, ySpread:20},
+  {id:'horde', name:'Horda', hint:'masa compacta, más filo pero sufre el mangonel', spd:1.08, atk:1.10, def:1, splash:1.6, ySpread:6},
+  {id:'flank', name:'Flanco',hint:'columnas que rodean; la caballería desborda', spd:1.10, atk:1.05, def:1, splash:1, ySpread:18, mountSpd:1.22}
+];
 
 /* ---- Utilidades ---- */
 const clamp=(v,a,b)=>v<a?a:v>b?b:v;
@@ -534,6 +554,32 @@ function canAfford(side,cost){const s=S.sides[side];for(const k in cost)if(s.res
 function pay(side,cost){const s=S.sides[side];for(const k in cost)s.res[k]-=cost[k];}
 const armyCount=side=>S.units.reduce((n,u)=>n+(u.side===side&&!u.dying?1:0),0);
 const fmtT=s=>Math.floor(s/60)+':'+String(Math.floor(s%60)).padStart(2,'0');
+/* La formación manda en el ejército del jugador; la IA marcha en libre */
+const formationOf=side=>side==='P'?FORMATIONS[S.form]:FORMATIONS[0];
+function formYTarget(u){
+  const f=formationOf(u.side);
+  if(u.side!=='P')return rr(-16,16);
+  const n=Math.max(1,armyCount('P'));
+  if(f.id==='line')return n>1?-f.ySpread+2*f.ySpread*(u.slot||0)/(n-1):0;
+  if(f.id==='horde')return rr(-f.ySpread,f.ySpread);
+  if(f.id==='flank')return ((u.slot||0)%2?-f.ySpread:f.ySpread)*0.9;
+  return rr(-16,16);
+}
+/* fila objetivo según el tamaño actual del ejército: la Línea se reajusta en
+   vivo para que el frente siempre quede uniforme mientras llegan refuerzos */
+function formTargetY(u,n){
+  const f=formationOf(u.side);
+  if(f.id==='line')return n>1?-f.ySpread+2*f.ySpread*(u.slot||0)/(n-1):0;
+  if(f.id==='flank')return ((u.slot||0)%2?-f.ySpread:f.ySpread)*0.9;
+  return u.fy!=null?u.fy:rr(-16,16);
+}
+function formSpdMul(u){
+  const f=formationOf(u.side);
+  return f.spd*(UNITS[u.type].mount?f.mountSpd||1:1);
+}
+function formAtkMul(u){return formationOf(u.side).atk;}
+function formDefMul(v){return formationOf(v.side).def;}
+function formSplashMul(v){return formationOf(v.side).splash;}
 
 /* ---- Estado ---- */
 let S=null;
@@ -553,6 +599,27 @@ function cycleSpeed(dir){
   const i=SPEEDS.indexOf(gameSpeed);
   setSpeed(SPEEDS[(i+(dir===undefined?1:dir)+SPEEDS.length)%SPEEDS.length]);
 }
+function cycleForm(dir){
+  if(S.over)return;
+  S.form=(S.form+(dir===undefined?1:dir)+FORMATIONS.length)%FORMATIONS.length;
+  // al cambiar de doctrina las tropas ya en campo reasignan su fila
+  let slot=0;
+  for(const u of S.units){
+    if(u.side!=='P'||u.dying)continue;
+    u.slot=slot;u.fy=formYTarget(u);slot++;
+  }
+  Snd.click();
+  const f=FORMATIONS[S.form];
+  toast('Formación: '+f.name+' — '+f.hint);
+  syncForm();
+}
+function syncForm(){
+  if(!el.formLbl)return;
+  const f=FORMATIONS[S.form];
+  el.formLbl.textContent=f.name;
+  el.formBtn.classList.toggle('on',S.form!==0);
+  el.formBtn.title='G para cambiar de formación: '+f.name+' ('+f.hint+')';
+}
 function newSide(){
   return {res:{food:150,wood:120,gold:100}, eng:{farm:0,wood:0,mine:0},
     workers:{farm:{alive:0,max:0,hp:0,rt:0}, wood:{alive:0,max:0,hp:0,rt:0}, mine:{alive:0,max:0,hp:0,rt:0}},
@@ -567,12 +634,13 @@ function newGame(pCiv,eCiv){
     playerRecent:[], aiThinkT:1.0, aiTrainT:5.0, aiEngT:0, aiUpgT:0, aiPlan:'lancer', aiAlarm:0,
     raidWarn:{P:{farm:-99,wood:-99,mine:-99}, E:{farm:-99,wood:-99,mine:-99}},
     raidEnd:{P:{farm:false,wood:false,mine:false}, E:{farm:false,wood:false,mine:false}},
-    herald:[], atkWarn:{P:-99,E:-99}};
+    herald:[], atkWarn:{P:-99,E:-99}, form:0};
   S.sides.P.civ=pCiv||null;
   S.sides.E.civ=eCiv||null;
   for(let i=0;i<8;i++)S.clouds.push({x:Math.random()*1.3-0.15, y:rr(0.04,0.21), s:rr(0.7,1.5), v:rr(4,11)});
   buildArmyDock();
   refreshCivHud();
+  syncForm();
   overShown(false);
   el.heraldEl.innerHTML='';
   heraldSay(S.sides.E.civ
@@ -724,10 +792,12 @@ function spawnUnit(side,type){
   if(armyCount(side)>=SIDE_CAP)return;
   const dir=side==='P'?1:-1;
   const sm=statMul(side,def); // bonus de civ (fase 2); sin civ es neutro
+  const slot=armyCount(side);
   S.units.push({side,type,x:castleFrontX(side)+dir*18,y0:rr(-16,16),
     hp:def.hp*mul*sm.hp,max:def.hp*mul*sm.hp,dmg:def.dmg*mul*sm.dmg,spd:def.spd*sm.spd,
-    cdt:rr(0,0.3),ph:Math.random()*6,flash:0,
-    dying:false,dieT:0,rally:0,age:S.sides[side].age});
+    cdt:rr(0,0.3),ph:Math.random()*6,flash:0,slot,
+    dying:false,dieT:0,rally:0,age:S.sides[side].age,
+    fy:formYTarget({side,type,slot})});
   S.rings.push({x:castleFrontX(side)+dir*18,y:laneY(),r:4,t:0.5,side});
   if(side==='P')Snd.march();
 }
@@ -772,7 +842,16 @@ function combatTick(dt){
     u.cdt-=dt; u.flash=Math.max(0,(u.flash||0)-dt);
     u.ph+=dt*(UNITS[u.type].mount?11:8);
     const def=UNITS[u.type];
-    const spd=u.spd||def.spd;
+    const spd=(u.spd||def.spd)*formSpdMul(u);
+    // la formación marca la altura de marcha: se aproxima suavemente a su fila
+    if(u.side==='P'){
+      const n=Math.max(1,armyCount('P'));
+      const ty=formTargetY(u,n);
+      if(u.fy==null)u.fy=ty;
+      u.fy=ty; // la Línea se reajusta en vivo con cada refuerzo
+      const dy=ty-u.y0;
+      u.y0+=clamp(dy*dt*2.2,-1.6,1.6);
+    }
     const dir=u.side==='P'?1:-1;
     let foe=null,bd=1e9;
     for(let j=0;j<us.length;j++){
@@ -879,7 +958,7 @@ function attack(u,foe){
   u.flash=0.22;
   const shots=def.volley||1;
   const atkMul=1+UPG.atk.step*S.sides[u.side].upg.atk;
-  const dmg=Math.max(1,Math.round(u.dmg*mult*home*atkMul*(shots>1?0.55:1)));
+  const dmg=Math.max(1,Math.round(u.dmg*mult*home*atkMul*formAtkMul(u)*(shots>1?0.55:1)));
   for(let i=0;i<shots;i++){
     if(def.ranged){
       S.arrows.push({x:u.x,y:laneY()+u.y0-20,sx:u.x,tx:foe.x+(shots>1?rr(-10,10):0),ty:laneY()+foe.y0-14,
@@ -896,7 +975,7 @@ function attack(u,foe){
   if(def.splash){
     for(const v of S.units){
       if(v.side===u.side||v.dying||v===foe)continue;
-      if(Math.abs(v.x-foe.x)<=def.splash&&Math.abs(v.y0-foe.y0)<=def.splash*0.7)damageUnit(v,dmg,mult>1);
+      if(Math.abs(v.x-foe.x)<=def.splash&&Math.abs(v.y0-foe.y0)<=def.splash*0.7)damageUnit(v,dmg,mult>1,true);
     }
     S.rings.push({x:foe.x,y:laneY()+foe.y0,t:0.5,big:def.splash});
     dust(foe.x,laneY()+foe.y0);
@@ -908,7 +987,7 @@ function attackCastle(u){
   const target=u.side==='P'?'E':'P';
   const c=S.sides[target];
   const atkMul=1+UPG.atk.step*S.sides[u.side].upg.atk;
-  const dmg=Math.round(u.dmg*atkMul*(def.castleBonus||1));
+  const dmg=Math.round(u.dmg*atkMul*(def.castleBonus||1)*formAtkMul(u));
   c.castleHp=Math.max(0,c.castleHp-dmg);
   const fx=castleFrontX(target), y=laneY()-rr(10,70);
   if(def.ranged){
@@ -947,7 +1026,7 @@ function attackWorkers(u,rt){
   hitSnd();
   const np=nodePos(rt.k,rt.side), ty=np.y+rr(0,10);
   spark(u.x,ty-6);
-  w.hp-=u.dmg;
+  w.hp-=u.dmg*formAtkMul(u);
   if(rt.side==='E')S.aiAlarm=7; // la IA reacciona: entrena lanceros y vuelve a defender
   while(w.alive>0&&w.hp<=w.alive*WORKER_HP-WORKER_HP){
     // cae un aldeano: el ingreso del nodo baja un escalón de golpe
@@ -979,10 +1058,12 @@ function villagerDown(x,y){
 function flameBurst(x,y){
   for(let i=0;i<8;i++)S.parts.push({x:x+rr(-6,6),y:y+rr(-6,6),vx:rr(-26,26),vy:rr(-60,-18),t:rr(0.25,0.5),life:0.5,r:rr(2,4.5),g:60,kind:'flame'});
 }
-function damageUnit(v,dmg,bonus){
+function damageUnit(v,dmg,bonus,isSplash){
   if(v.dying)return;
   const defMul=1-UPG.def.step*S.sides[v.side].upg.def;
-  dmg=Math.max(1,Math.round(dmg*defMul));
+  let fm=formDefMul(v);
+  if(isSplash)fm*=formSplashMul(v);
+  dmg=Math.max(1,Math.round(dmg*defMul*fm));
   v.hp-=dmg;
   S.nums.push({x:v.x+rr(-6,6),y:laneY()+v.y0-26,t:0.8,v:dmg,crit:dmg>=16,bonus:!!bonus});
   if(v.hp<=0){
@@ -1409,6 +1490,20 @@ globalThis.GAME={
   },
   buyEngine, ageUp:playerAgeUp, buyUpg:k=>playerBuyUpg(k), restart,
   setSpeed:v=>setSpeed(v), cycleSpeed:dir=>cycleSpeed(dir), getSpeed:()=>gameSpeed,
+  setForm:n=>{S.form=clamp(n|0,0,FORMATIONS.length-1);syncForm();},
+  getForm:()=>S.form,
+  cycleForm:dir=>cycleForm(dir),
+  formMul:(side,f)=>{const u={side,slot:0};return{atk:formAtkMul(u),def:formDefMul(u),splash:formSplashMul(u)};},
+  /* daño real que sufre una unidad del bando dado vía damageUnit (splash opcional).
+     La víctima es del lado P para que la doctrina de formación del jugador mande. */
+  _hit:(side,raw,isSplash)=>{
+    spawnUnit(side==='P'?'P':'E','lancer');
+    const victim=S.units[S.units.length-1];
+    if(!victim)return null;
+    const before=victim.hp;
+    damageUnit(victim,raw,false,!!isSplash);
+    return before-victim.hp;
+  },
   setDifficulty:n=>{difficulty=clamp(n|0,0,3);},
   getDifficulty:()=>difficulty,
   setVolume:v=>Snd.setVolume(v), getVolume:()=>Snd.getVolume(),
@@ -2355,7 +2450,12 @@ function codexTechHtml(){
       '<span class="cx-sub">+'+e.rate.toFixed(1)+' '+RES_NAME[e.res]+'/s por nivel · máximo 8</span></span>'+
       '<span class="cx-cost">'+codexCostHtml({[e.costRes]:Math.round(e.base)})+'</span></div>';
   }
-  return '<h3 class="cx-h">Edades</h3>'+ages+'<h3 class="cx-h">Herrería</h3>'+herr+'<h3 class="cx-h">Motores de economía</h3>'+eng;
+  let form='';
+  for(const f of FORMATIONS){
+    form+='<div class="cx-row"><span class="cx-ut"><b>'+f.name+'</b>'+
+      '<span class="cx-sub">'+f.hint+'</span></span></div>';
+  }
+  return '<h3 class="cx-h">Edades</h3>'+ages+'<h3 class="cx-h">Herrería</h3>'+herr+'<h3 class="cx-h">Motores de economía</h3>'+eng+'<h3 class="cx-h">Formaciones</h3>'+form;
 }
 function codexCivHtml(){
   return CIV_ORDER.map(c=>{
@@ -2437,6 +2537,7 @@ function cacheDom(){
   }
   el.armyRow=$('army-row');
   el.speedBtn=$('speedbtn');el.speedLbl=$('speedlbl');
+  el.formBtn=$('formbtn');el.formLbl=$('formlbl');
   el.upgBtn={atk:$('upg-atk'),def:$('upg-def')};
   el.upgPips={atk:$('upg-atk-pips'),def:$('upg-def-pips')};
   el.upgCost={atk:$('upg-atk-cost'),def:$('upg-def-cost')};
@@ -2566,6 +2667,7 @@ function wire(){
   el.codexBtnPick.addEventListener('click',()=>toggleCodex());
   el.codexX.addEventListener('click',()=>toggleCodex(false));
   el.speedBtn.addEventListener('click',()=>cycleSpeed());
+  el.formBtn.addEventListener('click',()=>cycleForm());
   el.volSlider=document.getElementById('vol-slider');
   el.volSlider.addEventListener('input',()=>Snd.setVolume(el.volSlider.value/100));
   document.getElementById('btn-restart').addEventListener('click',restart);
@@ -2589,6 +2691,7 @@ function wire(){
     else if(k==='w')playerBuyUpg('def');
     else if(k==='f')playerAgeUp();
     else if(k==='v')cycleSpeed();
+    else if(k==='g')cycleForm();
     else if(k==='+'||k==='=')cycleSpeed(1);
     else if(k==='-'||k==='_')cycleSpeed(-1);
     else if(k>='1'&&k<='9'&&S.hotkeys)playerTrain(S.hotkeys[+k-1]);

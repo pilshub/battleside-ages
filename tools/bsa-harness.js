@@ -250,6 +250,64 @@ if (cmd === 'smoke') {
     console.log('E stats:', JSON.stringify(r.state.E));
     console.log('Ages P/E:', r.state.ages[0], '/', r.state.ages[1]);
   }
+} else if (cmd === 'formcheck') {
+  /* Verifica de forma determinista los multiplicadores y la colocación
+     en línea de las formaciones, además de un combate de daño controlado. */
+  const fail = m => { console.error('FORMCHECK FAILED: ' + m); process.exit(1); };
+  GAME.setDifficulty(0);
+  GAME._startMatch('english', 'french');
+  GAME._grant('P', { food: 1e6, wood: 1e6, gold: 1e6 });
+  GAME._grant('E', { food: 1e6, wood: 1e6, gold: 1e6 });
+  // Libre (form 0): todo 1x
+  GAME.setForm(0);
+  const libre = GAME.formMul('P');
+  if (libre.atk !== 1 || libre.def !== 1 || libre.splash !== 1) fail('Libre no es 1x: ' + JSON.stringify(libre));
+  // Línea: defensa 0.90, splash 0.5, ataque 1x
+  GAME.setForm(1);
+  const line = GAME.formMul('P');
+  if (line.def !== 0.90 || line.splash !== 0.5 || line.atk !== 1) fail('Línea mal: ' + JSON.stringify(line));
+  // Horda: ataque 1.10, splash 1.6
+  GAME.setForm(2);
+  const horde = GAME.formMul('P');
+  if (horde.atk !== 1.10 || horde.splash !== 1.6) fail('Horda mal: ' + JSON.stringify(horde));
+  // Flanco: ataque 1.05
+  GAME.setForm(3);
+  const flank = GAME.formMul('P');
+  if (flank.atk !== 1.05) fail('Flanco mal: ' + JSON.stringify(flank));
+  // colocación en Línea: fy uniformemente espaciado y se reajusta en vivo
+  GAME.setForm(1);
+  const placed = [];
+  for (let s = 0; s < 8; s++) placed.push(GAME._place('P', 'lancer', 100 + s * 30));
+  GAME.update(0.05); // el frente se reajusta en vivo con el ejército actual
+  const fys = placed.map(u => u.fy).sort((a, b) => a - b);
+  const span = fys[fys.length - 1] - fys[0];
+  const step = span / (fys.length - 1);
+  for (let i = 1; i < fys.length; i++) {
+    if (Math.abs((fys[i] - fys[i - 1]) - step) > 0.75) fail('espaciado de Línea irregular en ' + fys[i].toFixed(1));
+  }
+  // daño real vía damageUnit (víctima P, cuya doctrina manda): Libre descuenta raw*defMul
+  const raw = 40, defMul = 1 - GAME.constData().UPG.def.step * GAME.state.sides.P.upg.def;
+  GAME.setForm(0);
+  const base = Math.max(1, Math.round(raw * defMul));
+  const freeHit = GAME._hit('P', raw, false);
+  if (freeHit !== base) fail('daño Libre mal: esperado ' + base + ', real ' + freeHit);
+  // Línea: la misma víctima recibe 0.90 de ese daño base
+  GAME.setForm(1);
+  const lineHit = GAME._hit('P', raw, false);
+  if (lineHit !== Math.max(1, Math.round(base * 0.90))) fail('daño Línea mal: esperado ' + Math.max(1, Math.round(base * 0.90)) + ', real ' + lineHit);
+  // Horda vs splash: la víctima en horda recibe 1.6x del daño de área
+  GAME.setForm(2);
+  const hordeHit = GAME._hit('P', raw, true);
+  if (hordeHit !== Math.max(1, Math.round(raw * defMul * 1 * 1.6))) fail('daño Horda-splash mal: esperado ' + Math.max(1, Math.round(raw * defMul * 1.6)) + ', real ' + hordeHit);
+  // Flanco sin splash: defensa 1x, daño idéntico a Libre
+  GAME.setForm(3);
+  const flankHit = GAME._hit('P', raw, false);
+  if (flankHit !== base) fail('daño Flanco mal: esperado ' + base + ', real ' + flankHit);
+  console.log('  ✓ Libre=1x, Línea def 0.90/splash 0.5, Horda atk 1.10/splash 1.6, Flanco atk 1.05');
+  console.log('  ✓ espaciado uniforme en Línea (' + fys.length + ' tropas, paso ' + step.toFixed(2) + ')');
+  console.log('  ✓ damageUnit aplica defensa de formación (Libre=' + freeHit + ', Línea=' + lineHit + ', Horda-splash=' + hordeHit + ')');
+  console.log('=== FORMCHECK PASSED ===');
+  process.exit(0);
 } else {
   console.error('comando desconocido: ' + cmd);
   process.exit(1);

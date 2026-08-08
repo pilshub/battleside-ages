@@ -4,7 +4,7 @@
   "description": "Mini-RTS auto-battler inspirado en **Age of Empires IV**. Elige tu civilización,\r desarrolla tu economía, avanza de edad, compone tu ejército y destruye el castillo\r rival. Todo en un único archivo, sin dependencias.",
   "main": "index.js",
   "scripts": {
-    "test": "node tools/bsa-harness.js smoke && node tools/dom-test.js"
+    "test": "node tools/bsa-harness.js smoke && node tools/bsa-harness.js formcheck && node tools/dom-test.js"
   },
   "repository": {
     "type": "git",

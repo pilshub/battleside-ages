@@ -109,7 +109,25 @@ for (let i = 0; i < 40000; i++) {
 pass = ok(probe && probe.t > 0, 'partida avanza en DOM real (t=' + (probe ? probe.t.toFixed(0) : '?') + 's)') && pass;
 pass = ok(probe && probe.over, 'partida llega a game over en DOM real') && pass;
 
-// música y sonido seguros sin AudioContext
+// --- formaciones: botón, ciclo y API ---
+game._startMatch('english', 'french'); // partida fresca: el ciclo se bloquea tras game over
+const formBtn = doc.getElementById('formbtn');
+const formLbl = doc.getElementById('formlbl');
+pass = ok(!!formBtn && !!formLbl, 'botón y etiqueta de formación existen') && pass;
+fire(formBtn, 'click');
+pass = ok(game.getForm() === 1, 'clic en formación pasa a Línea (form=' + game.getForm() + ')') && pass;
+game.setForm(2);
+pass = ok(game.getForm() === 2, 'setForm(2) aplica Horda') && pass;
+game.cycleForm();
+pass = ok(game.getForm() === 3, 'cycleForm avanza a Flanco (form=' + game.getForm() + ')') && pass;
+game.cycleForm();
+pass = ok(game.getForm() === 0, 'cycleForm vuelve a Libre') && pass;
+pass = ok((formBtn.className || '').indexOf('on') < 0, 'botón Libre sin clase on') && pass;
+game.setForm(1);
+pass = ok((formBtn.className || '').indexOf('on') >= 0, 'botón Línea con clase on') && pass;
+pass = ok((formLbl.textContent || '').indexOf('Línea') >= 0, 'etiqueta muestra Línea') && pass;
+
+// --- música y sonido seguros sin AudioContext ---
 let sndOk = true;
 try { window.GAME._startMatch('mongols', 'delhi'); window.GAME.update(0.05); } catch (e) { sndOk = false; errors.push('mus: ' + e.message); }
 pass = ok(sndOk, 'arranque con música/SFX no lanza excepción sin AudioContext') && pass;
