@@ -775,7 +775,9 @@ if (cmd === 'smoke') {
   GAME._buildMeadow('P', 'watch'); GAME._buildMeadow('E', 'camp'); GAME._eng('P', 'farm', 3);
   if (!GAME._deployMeadow('P', 'warden', 'farm') || !GAME._deployMeadow('E', 'saboteur', 'farm')) fail('no desplegó defensa/incursor');
   for (let i = 0; i < 1000; i++) GAME.update(0.05);
-  if (GAME._meadow('P').defended < 1 && GAME._unitStates().some(u => u.side === 'E' && u.type === 'saboteur' && !u.dying)) fail('Guardián/Vigía no interceptaron la incursión');
+  if (GAME._meadow('P').defended < 1 && GAME._unitStates().some(u => u.side === 'E' && u.type === 'saboteur' && !u.dying)) {
+    fail('Guardián/Vigía no interceptaron la incursión: ' + JSON.stringify({ meadowP: GAME._meadow('P'), units: GAME._unitStates().filter(u => u.front === 'meadow') }));
+  }
   // Regla de edificio: antorcha para tropa, proyectil para asedio.
   GAME._startMatch('english', 'french');
   const lancer = GAME._place('P', 'lancer', 500); GAME._attackCastle(lancer);
