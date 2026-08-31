@@ -12,6 +12,7 @@ const { spawn } = require('node:child_process');
 
 const ROOT = path.resolve(__dirname, '..');
 const CHROME = process.env.CHROME_PATH || 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
+const SHEET_TYPES = ['lancer','archer','scout','crossbow','handcan','knight','elite','mangonel','bombard','saboteur','warden','longbow','royal','mangudai','landsknecht','zhugenu','janissary','horsearcher','warelephant','worker'];
 const startedAt = Date.now();
 let server;
 let chrome;
@@ -198,7 +199,7 @@ async function main() {
   assert(desktop.meta && desktop.theme && desktop.icon, 'meta description, theme-color y favicon presentes');
   for (const asset of ['assets/battle-ages-key-art.webp', 'assets/battle-ages-emblem.webp',
     'assets/pixel-units-atlas-v1.png', 'assets/pixel-buildings-atlas-v1.png', 'assets/pixel-meadow-atlas-v1.png',
-    'assets/pixel-valley-background-v1.png']) {
+    'assets/pixel-valley-background-v1.png', ...SHEET_TYPES.map(t => `assets/unit-sheets/${t}-v1.png`)]) {
     const response = await fetch(`${base}/${asset}`);
     assert(response.status === 200, `${asset} responde HTTP 200`);
   }
@@ -220,8 +221,23 @@ async function main() {
   assert(pixelScene.pradoVisible && pixelScene.pixelCards === 8, 'Prado visible y selector usa 8 sprites pixel-art');
   assert(pixelScene.assets, 'todos los atlas e imagen de mundo se decodifican');
   assert(pixelScene.meadow.some(u => u.type === 'saboteur') && pixelScene.meadow.some(u => u.type === 'warden'), 'Saboteador y Guardián se renderizan en el Prado');
+  assert(await waitFor(cdp, `Object.keys(UNIT_SHEETS).length===19 && Object.values(UNIT_SHEETS).every(i=>i._sheet?._frames?.length===16) && WORKER_SHEET?._sheet?._frames?.length===16`, 15000), '19 hojas militares y aldeano enmascarados con 16 frames cacheados');
   const desktopShot = await capture(cdp, 'qa-desktop-pixel.png');
   console.log('  captura desktop:', desktopShot);
+  const animationShowcase = await evaluate(cdp, `(() => {
+    GAME._startMatch('english','french'); manualPaused=true; S.units=[];
+    const types=${JSON.stringify(SHEET_TYPES.slice(0, -1))};
+    const states=['idle','walk','attack','torch'];
+    for(let i=0;i<types.length;i++){
+      const side=i<10?'P':'E', col=i%10, u=GAME._place(side,types[i],245+col*105);
+      u.y0=i<10?-78:16;u.action=(UNITS[u.type].siege&&states[i%4]==='torch')?'siege':states[i%4];u.actionT=.22;u.ph=1.5+i*.8;
+    }
+    render();
+    return {count:S.units.length,types:[...new Set(S.units.map(u=>u.type))],rows:[...new Set(S.units.map(u=>GAME._animationFrame(u).row))]};
+  })()`);
+  assert(animationShowcase.count === 19 && animationShowcase.types.length === 19 && animationShowcase.rows.length === 4, 'revista renderiza cada unidad individual y los cuatro estados de animación');
+  const showcaseShot = await capture(cdp, 'qa-animation-showcase.png');
+  console.log('  captura animaciones:', showcaseShot);
   const stress = await evaluate(cdp, `(() => {
     const SIDE_CAP = 42;
     const mix = [['lancer',0],['archer',1],['crossbow',2],['handcan',3],['scout',1],['knight',2],['elite',3],['mangonel',2],['bombard',3]];

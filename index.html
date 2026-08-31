@@ -2271,7 +2271,7 @@ globalThis.GAME={
   _projectiles:()=>({torches:S.torches.length,arrows:S.arrows.length,torchStates:S.torches.map(t=>({side:t.side,t:t.t,lit:t.lit}))}),
   _unitStates:()=>S.units.map(u=>({side:u.side,type:u.type,front:u.front,x:u.x,y0:u.y0,action:u.action,actionT:u.actionT,dying:u.dying,target:u.meadowTarget})),
   _economyVisual:side=>Object.fromEntries(Object.keys(ENGINES).map(k=>[k,{facilities:1,assigned:S.sides[side].eng[k],alive:S.sides[side].workers[k].alive}])),
-  _animationCatalog:()=>({types:ANIMATED_TYPES.slice(),available:AVAILABLE_ANIMATED_TYPES.slice(),pending:ANIMATED_TYPES.filter(t=>!AVAILABLE_ANIMATED_TYPES.includes(t)).concat('worker'),worker:'worker',cols:4,rows:4,states:['idle','walk','attack','torch-or-siege']}),
+  _animationCatalog:()=>({types:ANIMATED_TYPES.slice(),available:AVAILABLE_ANIMATED_TYPES.slice(),pending:ANIMATED_TYPES.filter(t=>!AVAILABLE_ANIMATED_TYPES.includes(t)),worker:'worker',workerAvailable:sheetReady(WORKER_SHEET),cols:4,rows:4,states:['idle','walk','attack','torch-or-siege']}),
   _animationFrame:u=>unitAnimationFrame(u),
   _grant:(side,res,v)=>{S.sides[side].res[res]+=v;},
   _setAge:(side,age)=>{S.sides[side].age=age;},
@@ -2357,9 +2357,7 @@ const PIXEL_ASSETS={
 };
 const ANIMATED_TYPES=['lancer','archer','scout','crossbow','handcan','knight','elite','mangonel','bombard','saboteur','warden',
   'longbow','royal','mangudai','landsknecht','zhugenu','janissary','horsearcher','warelephant'];
-// Checkpoint jugable: solo solicitamos las hojas ya producidas. Las pendientes
-// siguen usando el atlas estático sin provocar 404 ni romper la partida.
-const AVAILABLE_ANIMATED_TYPES=['lancer','archer','scout','crossbow','handcan','knight','elite','mangonel','bombard','saboteur','warden','longbow','royal'];
+const AVAILABLE_ANIMATED_TYPES=ANIMATED_TYPES.slice();
 function prepareTransparentSheet(img){
   try{
     const c=document.createElement('canvas'),cx=c.getContext&&c.getContext('2d');
@@ -2370,7 +2368,19 @@ function prepareTransparentSheet(img){
     const push=i=>{if(i>=0&&i<w*h&&!seen[i]&&bg(i)){seen[i]=1;stack.push(i);}};
     for(let x=0;x<w;x++){push(x);push((h-1)*w+x);}for(let y=0;y<h;y++){push(y*w);push(y*w+w-1);}
     while(stack.length){const i=stack.pop(),x=i%w;d[i*4+3]=0;if(x)push(i-1);if(x<w-1)push(i+1);if(i>=w)push(i-w);if(i<w*(h-1))push(i+w);}
-    cx.putImageData(im,0,0);return c;
+    cx.putImageData(im,0,0);
+    // Cacheamos las 16 celdas a una resolución de render suficiente. Dibujar
+    // desde las hojas fuente de ~1.5K en cada frame multiplicaba el coste al
+    // llenar el campo de batalla; estas celdas conservan el pixel art nítido.
+    c._frames=[];
+    const sw=c.width/4,sh=c.height/4;
+    for(let row=0;row<4;row++)for(let col=0;col<4;col++){
+      const f=document.createElement('canvas'),fx=f.getContext&&f.getContext('2d');
+      if(!fx)continue;
+      f.width=160;f.height=160;fx.imageSmoothingEnabled=false;
+      fx.drawImage(c,col*sw,row*sh,sw,sh,0,0,160,160);c._frames.push(f);
+    }
+    return c;
   }catch(_){return null;}
 }
 function animatedSheet(type){
@@ -2380,14 +2390,14 @@ function animatedSheet(type){
   return img;
 }
 const UNIT_SHEETS={};for(const t of AVAILABLE_ANIMATED_TYPES)UNIT_SHEETS[t]=animatedSheet(t);
-const WORKER_SHEET=null; // se activa al producir worker-v1.png
+const WORKER_SHEET=animatedSheet('worker');
 function sheetReady(img){return !!(img&&img._sheet&&img._sheet.width&&typeof ctx.drawImage==='function');}
 function drawSheetFrame(img,row,frame,x,y,w,h,flip){
   if(!sheetReady(img))return false;
-  const sh=img._sheet,sw=sh.width/4,fh=sh.height/4,sx=(frame%4)*sw,sy=(row%4)*fh;
+  const sh=img._sheet,frames=sh._frames,cell=frames&&frames[(row%4)*4+(frame%4)],sw=sh.width/4,fh=sh.height/4,sx=(frame%4)*sw,sy=(row%4)*fh;
   ctx.save();ctx.imageSmoothingEnabled=false;
-  if(flip){ctx.translate(x+w,y);ctx.scale(-1,1);ctx.drawImage(sh,sx,sy,sw,fh,0,0,w,h);}
-  else ctx.drawImage(sh,sx,sy,sw,fh,x,y,w,h);
+  if(flip){ctx.translate(x+w,y);ctx.scale(-1,1);if(cell)ctx.drawImage(cell,0,0,w,h);else ctx.drawImage(sh,sx,sy,sw,fh,0,0,w,h);}
+  else if(cell)ctx.drawImage(cell,x,y,w,h);else ctx.drawImage(sh,sx,sy,sw,fh,x,y,w,h);
   ctx.restore();return true;
 }
 const UNIT_SPRITE={lancer:0,archer:1,longbow:1,scout:2,knight:3,crossbow:4,handcan:5,elite:6,mangonel:7,bombard:8,
@@ -2805,10 +2815,10 @@ const VILL_OFF={
   mine:[[-14,6],[-2,10],[10,6],[-8,14],[6,15],[16,12],[-20,10],[0,4]],
   quarry:[[-18,4],[-4,9],[10,4],[-12,13],[4,14],[18,11],[-24,8],[16,7]]
 };
-function drawPixelWorker(x,y,phase,flip){
+function drawPixelWorker(x,y,phase,flip,resource){
   if(sheetReady(WORKER_SHEET)){
     const frame=Math.floor(phase*1.25)%4;
-    drawSheetFrame(WORKER_SHEET,2,frame,x-15,y-38,30,40,flip);return;
+    drawSheetFrame(WORKER_SHEET,resource==='farm'?2:3,frame,x-15,y-38,30,40,flip);return;
   }
   const step=Math.sin(phase*2.2),work=Math.sin(phase*3.1)*0.10;
   ctx.save();ctx.translate(x,y+Math.abs(step)*1.5);ctx.rotate(work);
@@ -2826,7 +2836,7 @@ function drawPixelNodes(side){
     const alive=s.workers[nd.k].alive;
     for(let i=0;i<Math.min(alive,8);i++){
       const o=VILL_OFF[nd.k][i],phase=S.t*2.7+i*1.37;
-      drawPixelWorker(nd.x+o[0],nd.y+o[1]+9,phase,flip);
+      drawPixelWorker(nd.x+o[0],nd.y+o[1]+9,phase,flip,nd.k);
     }
     if(lvl>0&&alive<lvl){
       const pulse=.55+.45*Math.sin(S.t*6);ctx.strokeStyle='rgba(255,72,48,'+pulse+')';ctx.lineWidth=3;

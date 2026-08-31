@@ -13,7 +13,7 @@ Abre `index.html` en el navegador, o juega online vía GitHub Pages:
 ## Cómo se juega
 
 - **Elige civilización** al inicio (8 disponibles), cada una con su unidad única y bonus.
-- **Economía**: compra niveles de granja (comida), aserradero (madera), mina (oro) y cantera (piedra) para generar recursos.
+- **Economía**: cada recurso tiene una única instalación persistente. Asigna hasta 8 aldeanos a granja (comida), aserradero (madera), mina (oro) y cantera (piedra); el raideo elimina temporalmente trabajadores y reduce su producción visible.
 - **El Prado**: un segundo frente económico visible. Construye hasta 3 **Almacenes** (+6% de producción cada uno), 2 **Puestos de Vigía** y 1 **Campamento de Incursión**.
 - **Incursiones dirigidas**: marca Granja, Madera, Oro o Piedra y envía **Saboteadores** (`R`) contra ese recurso. Despliega **Guardianes** (`Y`) para patrullar e interceptarlos; `H` cambia el objetivo.
 - **Edades**: avanza Dark → Feudal → Castle → Imperial para desbloquear unidades y mejoras.
@@ -91,8 +91,10 @@ El arte pixel-art original fue generado con ChatGPT/ImageGen para este proyecto:
 - `assets/pixel-units-atlas-v1.png` — atlas 5×4 de tropas, especialistas y aldeano.
 - `assets/pixel-buildings-atlas-v1.png` — atlas 4×4 de economía, Prado, defensa, castillos y maravilla.
 - `assets/pixel-meadow-atlas-v1.png` — atlas 4×4 de recursos, fuego, humo, impactos y marcadores.
+- `assets/unit-sheets/*-v1.png` — 19 hojas militares individuales 4×4: reposo, marcha, combate y antorcha; mangonel y bombarda sustituyen la última fila por fuego/recarga de asedio.
+- `assets/unit-sheets/worker-v1.png` — aldeano 4×4 con reposo, transporte, agricultura y trabajo de hacha/pico.
 
-El canvas usa escalado sin suavizado y conserva rutinas vectoriales como fallback si algún atlas no carga.
+El canvas elimina el fondo claro conectado a los bordes, precalcula las 16 celdas de cada hoja y usa escalado sin suavizado. Conserva los atlas estáticos como fallback si una hoja no carga.
 
 ### Pruebas
 
@@ -105,7 +107,7 @@ npm run qa:balance      # diffcheck: 20 partidas/dificultad con seeds 1337 y 424
 ```
 
 - `tools/bsa-harness.js` — arnés headless con `smoke`, `diffcheck [N] [seed]`, `soakcheck [seed]`, `autoplay [pCiv eCiv]`, `formcheck`, `defcheck`, `techcheck`, `wondercheck` y `pradocheck`. `diffcheck` ejecuta N partidas por dificultad con calendario y azar de simulación desacoplados. `pradocheck` verifica producción, caps, incursión, defensa y la excepción de asedio.
-- `tools/browser-qa.js` — QA de Chrome real en 1440×900 y 500×844: assets, escenas pixel-art, interacción, overflow, errores de consola/red y stress de 84 tropas. Guarda capturas en `artifacts/`.
+- `tools/browser-qa.js` — QA de Chrome real en 1440×900 y 500×844: descarga y decodifica los 20 sprite sheets, exige 16 frames cacheados por hoja, renderiza una revista de las 19 unidades, revisa interacción/overflow/consola/red y estresa 84 tropas. Guarda capturas en `artifacts/`.
 - `tools/dom-test.js` — jsdom con eventos reales: accesibilidad, Codex, pausa, partida completa, construcción/objetivos/unidades de El Prado, estados animados y antorcha frente a proyectil de asedio.
 
 ### Gauntlet final
@@ -113,7 +115,7 @@ npm run qa:balance      # diffcheck: 20 partidas/dificultad con seeds 1337 y 424
 - 160 partidas reproducibles (`N20`, seeds `1337` y `4242`), sin excepciones, empates ni partidas incompletas.
 - Tasa agregada del bot jugador: **Fácil 100% · Normal 52,5% · Difícil 32,5% · Extremo 0%**.
 - Stress de Chrome: 84 tropas, 300 ticks, ~0,8 ms/tick (presupuesto: 16,7 ms/tick).
-- Soak determinista: 8+ partidas y más de 100.000 pasos, con invariantes de recursos, colas, caps de ambos frentes, proyectiles y estado finito.
+- Soak determinista: 10 partidas y 114.407 pasos, con invariantes de recursos, colas, caps de ambos frentes, proyectiles y estado finito.
 
 ---
 

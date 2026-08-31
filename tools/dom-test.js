@@ -73,6 +73,9 @@ pass = ok(doc.querySelector('meta[name="description"]') && doc.querySelector('me
 pass = ok((doc.getElementById('cv').textContent || '').indexOf('canvas') >= 0, 'canvas incluye fallback textual') && pass;
 pass = ok(fs.existsSync(path.join(ROOT, 'assets', 'battle-ages-key-art.webp')) && fs.existsSync(path.join(ROOT, 'assets', 'battle-ages-emblem.webp')) && /battle-ages-key-art\.webp/.test(HTML) && /battle-ages-emblem\.webp/.test(HTML), 'assets originales referenciados y presentes') && pass;
 pass = ok(['pixel-units-atlas-v1.png','pixel-buildings-atlas-v1.png','pixel-meadow-atlas-v1.png','pixel-valley-background-v1.png'].every(f => fs.existsSync(path.join(ROOT, 'assets', f))) && /pixel-units-atlas-v1\.png/.test(HTML) && /pixel-valley-background-v1\.png/.test(HTML), 'atlas y paisaje pixel-art originales presentes y conectados') && pass;
+const animatedTypes = ['lancer','archer','scout','crossbow','handcan','knight','elite','mangonel','bombard','saboteur','warden','longbow','royal','mangudai','landsknecht','zhugenu','janissary','horsearcher','warelephant'];
+const sheetFiles = animatedTypes.concat('worker').map(t => path.join(ROOT, 'assets', 'unit-sheets', t + '-v1.png'));
+pass = ok(sheetFiles.every(fs.existsSync) && new Set(sheetFiles).size === 20, '20 hojas individuales existen: 19 unidades y aldeano') && pass;
 const diffBtns = [...doc.querySelectorAll('#diff-btns .diff-btn')];
 pass = ok(diffBtns.length === 4 && diffBtns.every(b => b.hasAttribute('aria-pressed')), 'dificultad expone aria-pressed') && pass;
 
@@ -128,6 +131,17 @@ pass = ok(doc.activeElement && doc.activeElement.id === 'codexbtn-civpick', 'cer
 const game = window.GAME;
 game.setDifficulty(0);
 game._startMatch('english', 'french');
+const animCatalog = game._animationCatalog();
+pass = ok(animCatalog.types.length === 19 && animCatalog.available.length === 19 && animCatalog.pending.length === 0 && animCatalog.cols === 4 && animCatalog.rows === 4, 'catálogo conecta las 19 hojas militares 4×4 sin pendientes') && pass;
+const animRows = [
+  game._animationFrame({ action:'idle', ph:0, actionT:0.3 }).row,
+  game._animationFrame({ action:'walk', ph:0, actionT:0.3 }).row,
+  game._animationFrame({ action:'attack', ph:0, actionT:0.3 }).row,
+  game._animationFrame({ action:'torch', ph:0, actionT:0.3 }).row,
+  game._animationFrame({ action:'siege', ph:0, actionT:0.3 }).row,
+];
+const walkFrames = [0.1, 2, 3.4, 5].map(ph => game._animationFrame({ action:'walk', ph, actionT:0.3 }).frame);
+pass = ok(animRows.join(',') === '0,1,2,3,3' && new Set(walkFrames).size >= 3, 'reproductor selecciona reposo, marcha, combate y antorcha/asedio con frames variables') && pass;
 doc.getElementById('pausebtn').focus();
 key('p');
 pass = ok(game.isPaused && game.isPaused() === true && doc.getElementById('pause-overlay').getAttribute('aria-hidden') === 'false', 'tecla P pausa y abre overlay accesible') && pass;
@@ -172,6 +186,16 @@ pass = ok(ageBtnA11y.getAttribute('aria-disabled') === 'true' && !ageBtnA11y.dis
 game._grant('P', 'food', 1e6); game._grant('P', 'gold', 1e6);
 game.update(0.2);
 pass = ok(ageBtnA11y.getAttribute('aria-disabled') === 'false', 'aria-disabled desaparece al conceder recursos') && pass;
+
+// --- Economía: una instalación persistente, más aldeanos en ella ---
+game._startMatch('english', 'french');
+game._grant('P', 'gold', 1e6);
+const mineAssign = doc.querySelector('#eng-mine [data-eng="mine"]');
+fire(mineAssign, 'click'); fire(mineAssign, 'click'); fire(mineAssign, 'click');
+game.update(0.2);
+const mineVisual = game._economyVisual('P').mine;
+pass = ok(mineVisual.facilities === 1 && mineVisual.assigned === 3 && mineVisual.alive === 3, 'asignar tres veces mantiene una mina y muestra tres aldeanos vivos') && pass;
+pass = ok(doc.querySelector('#eng-mine .lvl').textContent.indexOf('3 aldeanos') >= 0 && mineAssign.textContent.indexOf('Asignar') >= 0, 'UI de mina habla de aldeanos y conserva la acción Asignar') && pass;
 
 // --- formaciones: botón, ciclo y API ---
 game._startMatch('english', 'french'); // partida fresca: el ciclo se bloquea tras game over
