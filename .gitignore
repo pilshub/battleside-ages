@@ -13,5 +13,8 @@ Thumbs.db
 # Logs
 *.log
 
+# QA visual local
+artifacts/
+
 # OpenCode internal state
 .opencode/goals/

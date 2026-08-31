@@ -3,6 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="Duelo de Reinos: estrategia en tiempo real entre ocho civilizaciones por el control del valle.">
+<meta name="theme-color" content="#0d150f">
+<link rel="icon" type="image/webp" href="assets/battle-ages-emblem.webp">
+<link rel="preload" as="image" href="assets/battle-ages-key-art.webp">
+<link rel="preload" as="image" href="assets/pixel-valley-background-v1.png">
+<link rel="preload" as="image" href="assets/battle-ages-emblem.webp">
 <title>Duelo de Reinos — Crónicas del Valle</title>
 <style>
 :root{
@@ -73,6 +79,7 @@ html,body{margin:0;padding:0;height:100%;overflow:hidden;background:#0d150f;
 
 /* ===== DOCK INFERIOR: overlay compacto de madera y bronce ===== */
 #dock{position:absolute;left:0;right:0;bottom:0;z-index:5;display:flex;align-items:stretch;
+  overflow-x:auto;overflow-y:hidden;scrollbar-width:thin;
   background:linear-gradient(180deg,rgba(109,90,53,.95),rgba(76,61,32,.95) 40%,rgba(44,34,16,.97));
   border-top:2px solid var(--gold-dk);box-shadow:0 -6px 18px rgba(0,0,0,.55),inset 0 2px 0 rgba(255,230,160,.12)}
 .dock-sec{padding:6px 12px 7px;display:flex;flex-direction:column;min-width:0;flex:none}
@@ -175,6 +182,7 @@ html,body{margin:0;padding:0;height:100%;overflow:hidden;background:#0d150f;
   box-shadow:0 0 0 1px rgba(201,162,39,.4),0 2px 0 #100b03,0 4px 8px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,235,170,.25)}
 #speedbtn.hot #speedlbl{color:var(--gold-hi)}
 #vol-wrap{display:flex;align-items:center;gap:4px;margin-left:6px;pointer-events:auto}
+#vol-label{font-size:8px;letter-spacing:.08em;text-transform:uppercase;color:#cdbf97;white-space:nowrap}
 #vol-ico{font-size:12px;color:var(--gold-hi);text-shadow:0 1px 3px #000;width:16px;text-align:center}
 #vol-slider{width:52px;height:4px;cursor:pointer;background:var(--wood-dk);border-radius:2px;accent-color:var(--gold);outline:none}
 #vol-slider::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:11px;height:11px;background:var(--gold);border-radius:50%;border:1px solid var(--gold-dk);cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.5)}
@@ -186,6 +194,18 @@ html,body{margin:0;padding:0;height:100%;overflow:hidden;background:#0d150f;
   clip-path:polygon(8px 0,calc(100% - 8px) 0,100% 50%,calc(100% - 8px) 100%,8px 100%,0 50%);
   opacity:0;transition:opacity .3s;pointer-events:none}
 #toast.show{opacity:1}
+
+/* Accesibilidad y pausa */
+.btn:focus-visible,.civ-card:focus-visible,#vol-slider:focus-visible{outline:3px solid #ffe38a;outline-offset:3px;box-shadow:0 0 0 5px rgba(10,8,2,.9),0 0 18px rgba(240,208,110,.9)}
+canvas{image-rendering:pixelated}
+#pausebtn{min-width:66px;padding:5px 10px;font-family:var(--display);font-weight:700;font-size:11px}
+#pause-overlay{position:absolute;inset:0;z-index:13;display:none;align-items:center;justify-content:center;background:rgba(5,7,4,.72)}
+#pause-overlay.show{display:flex}
+#pause-panel{width:min(420px,90vw);padding:28px 26px;text-align:center;background:linear-gradient(180deg,#252f1e,#151c11);border:3px double var(--gold);box-shadow:0 20px 55px #000}
+#pause-title{margin:0 0 12px;font-family:var(--display);color:var(--gold-hi);font-size:clamp(30px,8vw,46px);letter-spacing:.15em}
+.pixel-art{image-rendering:pixelated;object-fit:contain;display:block}
+#civ-emblem{width:76px;height:76px;margin:0 auto 4px;filter:drop-shadow(0 3px 4px #000)}
+#over-emblem{width:68px;height:68px;margin:0 auto 5px;filter:drop-shadow(0 3px 4px #000)}
 
 /* ===== PANTALLA FINAL ===== */
 #overlay{position:absolute;inset:0;z-index:10;display:none;align-items:center;justify-content:center;
@@ -287,6 +307,7 @@ html,body{margin:0;padding:0;height:100%;overflow:hidden;background:#0d150f;
   box-shadow:0 0 0 1px rgba(201,162,39,.45),0 2px 0 #100b03,0 4px 8px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,235,170,.25)}
 #codex-body{overflow-y:auto;padding-right:6px;display:flex;flex-direction:column;gap:6px;scrollbar-width:thin;
   scrollbar-color:rgba(201,162,39,.5) rgba(0,0,0,.28)}
+#codex-body,#codex-body *{user-select:text;-webkit-user-select:text}
 #codex-body::-webkit-scrollbar{width:6px}
 #codex-body::-webkit-scrollbar-track{background:rgba(0,0,0,.28);border-radius:3px}
 #codex-body::-webkit-scrollbar-thumb{background:rgba(201,162,39,.5);border-radius:3px}
@@ -309,10 +330,75 @@ html,body{margin:0;padding:0;height:100%;overflow:hidden;background:#0d150f;
 .cx-note{font-size:10.5px;font-style:italic;color:#cdbf97;letter-spacing:.04em;margin:0 0 4px}
 .cx-num{flex:none;min-width:26px;font-family:var(--display);font-weight:700;font-size:12px;color:var(--gold-hi);text-align:center}
 #codex-open{display:flex;justify-content:center;margin:12px 0 0}
+
+/* Arte original a sangre completa. Estas reglas van tras los estilos base
+   para que el shorthand de los overlays no descarte las imágenes. */
+#civpick{background:linear-gradient(180deg,rgba(8,13,8,.55),rgba(6,9,5,.9)),url('assets/battle-ages-key-art.webp') center/cover no-repeat,radial-gradient(ellipse at 50% 38%,#141c0f,#060905)}
+#overlay{background:linear-gradient(180deg,rgba(5,8,5,.48),rgba(5,7,4,.86)),url('assets/battle-ages-key-art.webp') center/cover no-repeat,radial-gradient(ellipse at 50% 45%,#080b06,#050704)}
+
+@media (max-width:700px), (max-height:620px){
+  html,body{overflow:auto;min-height:100%}
+  #topbar{padding:4px 6px 12px;gap:4px;align-items:flex-start}
+  #center-hud{gap:4px;flex:1;justify-content:center;min-width:0}
+  #resources{gap:2px;flex-wrap:wrap;justify-content:center}
+  .res{padding:2px 4px;gap:2px}.res .rv{font-size:12px;min-width:22px}.res .rr{display:none}
+  .house{gap:3px;max-width:25vw}.house .ico{width:20px;height:23px}.house-name{font-size:10px;letter-spacing:.06em}.house-age,.house-sub{display:none}
+  #era-wrap{gap:3px}#diff-inline{display:none}#agebtn{padding:4px 7px;gap:4px}.a-name{font-size:11px!important}.a-cost{display:none!important}
+  #dock{overflow-x:auto;overflow-y:hidden;align-items:stretch;touch-action:pan-x;scrollbar-width:thin}
+  .dock-sec{padding:4px 6px 5px;min-width:max-content}.sec-title{font-size:8px;letter-spacing:.14em}.sec-hint{display:none}
+  #recruit-sec{min-width:280px;flex:0 0 280px}.army-row{max-width:280px}.ubtn{padding:3px 6px;gap:4px}
+  #hint{display:none}#toast{right:6px;bottom:76px;max-width:90vw}
+  #civpick{align-items:flex-start;padding:8px 0;overflow-y:auto}
+  #civpick-panel{width:calc(100vw - 12px);padding:12px 10px 14px;margin:4px 0;clip-path:none}
+  #civpick-title{font-size:clamp(27px,9vw,42px);letter-spacing:.08em;white-space:normal}
+  #civpick-sub{font-size:12px;margin:6px auto 10px;max-width:95%}
+  #civ-emblem{width:54px;height:54px}
+  #civ-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}.civ-card{padding:7px 5px;min-height:126px;gap:3px}.civ-card svg{width:35px;height:39px}.civ-name{font-size:12px}.civ-unit,.civ-bonus{font-size:9px}
+  #diff-selector{flex-wrap:wrap;gap:5px;margin:8px 0 2px}.diff-label{font-size:10px}.diff-btn{padding:4px 8px;font-size:10px}
+  #civpick-note{font-size:8px;letter-spacing:.08em;margin-top:8px}
+  #over-panel{width:calc(100vw - 16px);padding:18px 12px 16px;clip-path:none;max-height:94vh;overflow:auto}.orn{font-size:11px}.srow{padding:4px 2px;font-size:11px}.srow .sl{font-size:9px}.srow b{font-size:12px}#over-title{font-size:clamp(42px,15vw,70px)}#over-sub{margin:6px 0 12px;font-size:12px}#over-emblem{width:50px;height:50px}
+  .btn,.civ-card{min-width:40px;min-height:40px}
+  #vol-slider{min-height:40px;min-width:52px}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.001ms!important;animation-delay:0s!important;animation-iteration-count:1!important;scroll-behavior:auto!important;transition-duration:.001ms!important}
+  .civ-card{animation:none!important;opacity:1;transform:none}
+}
+/* ===== PIXEL SYSTEM + SEGUNDO FRENTE: EL PRADO ===== */
+html,body,button,input{image-rendering:pixelated}
+body{font-family:"Courier New",Consolas,monospace;letter-spacing:.01em}
+.btn,.eng,.civ-card,#civpick-panel,#codex-panel,#over-panel,#pause-panel{border-radius:0!important}
+.btn{box-shadow:3px 3px 0 #100b03,inset 1px 1px 0 rgba(255,235,170,.28)!important}
+.btn:active{transform:translate(2px,2px);box-shadow:1px 1px 0 #100b03!important}
+.pixel-dock-icon,.u-sprite,.prado-sprite{display:block;flex:none;background-repeat:no-repeat;background-color:transparent;image-rendering:pixelated}
+.pixel-dock-icon{width:40px;height:40px;background-image:url('assets/pixel-buildings-atlas-v1.png');background-size:400% 400%}
+.eng>.eic{display:none}
+.u-sprite{width:42px;height:42px;background-image:url('assets/pixel-units-atlas-v1.png');background-size:500% 400%;filter:drop-shadow(2px 2px 0 #100b03)}
+.u-icowrap .u-sprite,.cx-uico .u-sprite,.house .ico .u-sprite{width:100%;height:100%}
+.civ-card>.u-sprite{width:62px;height:62px}
+.cx-banner.u-sprite{width:34px;height:34px;border:0;background-color:transparent}
+#prado-sec{width:480px;min-width:480px;flex:0 0 480px;background:linear-gradient(180deg,rgba(31,53,30,.96),rgba(14,29,17,.98));border-top:2px solid #7da05b}
+#prado-sec .sec-title{color:#c8e59a}
+.prado-row{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));align-items:stretch;gap:4px}
+.prado-build,.prado-unit{display:flex;align-items:center;gap:4px;min-width:0;padding:3px 4px!important}
+.prado-build .prado-sprite,.prado-unit .prado-sprite{width:34px;height:34px}
+.prado-build .prado-sprite{background-image:url('assets/pixel-buildings-atlas-v1.png');background-size:400% 400%}
+.prado-unit .prado-sprite{background-image:url('assets/pixel-units-atlas-v1.png');background-size:500% 400%}
+.prado-copy{display:flex;flex-direction:column;line-height:1.05;text-align:left;font-size:9px}
+.prado-copy b{font-size:10px;color:#f2e8bd}.prado-copy i{font-style:normal;color:#a8c987}
+#prado-targets{display:flex;align-items:center;gap:3px;margin-top:4px}
+#prado-targets .btn{min-width:50px;padding:4px 6px;font-size:9px}
+#prado-targets .active{border-color:#a9d46f;background:#315328;color:#f0ffd8}
+#prado-status{font-size:9px;color:#a8c987;min-width:92px;line-height:1.25;padding:3px 4px}
+.pixel-chip{display:inline-block;padding:1px 4px;border:1px solid #587747;background:#162416;color:#c8e59a}
+@media (max-width:700px), (max-height:620px){
+  .house .house-txt{display:none}
+  #prado-sec{width:320px;min-width:320px;flex:0 0 320px}.prado-build,.prado-unit{min-width:0}.pixel-dock-icon{width:34px;height:34px}
+}
 </style>
 </head>
 <body>
-<canvas id="cv"></canvas>
+<canvas id="cv" role="img" aria-label="Campo de batalla del valle">Tu navegador no admite el canvas. Usa la pantalla de selección para comenzar.</canvas>
 
 <header id="topbar">
   <div class="house house-blue">
@@ -324,6 +410,7 @@ html,body{margin:0;padding:0;height:100%;overflow:hidden;background:#0d150f;
       <div class="res" id="res-food" title="Comida"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 14V6" stroke="#b98f2e" stroke-width="1.6" stroke-linecap="round"/><ellipse cx="8" cy="4.2" rx="1.9" ry="3" fill="#dcb24a"/><ellipse cx="4.4" cy="6.4" rx="1.6" ry="2.6" fill="#c9a23a" transform="rotate(-28 4.4 6.4)"/><ellipse cx="11.6" cy="6.4" rx="1.6" ry="2.6" fill="#c9a23a" transform="rotate(28 11.6 6.4)"/></svg><b class="rv" id="rv-food">0</b><span class="rr" id="rr-food">+0.0/s</span></div>
       <div class="res" id="res-wood" title="Madera"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="2" y="6" width="12" height="5.6" rx="2.8" fill="#7a5230"/><circle cx="4.8" cy="8.8" r="1.9" fill="#a5793f"/><circle cx="4.8" cy="8.8" r=".8" fill="#6b4423"/><rect x="4.5" y="2.6" width="9" height="4.4" rx="2.2" fill="#8a5f36"/><circle cx="6.6" cy="4.8" r="1.5" fill="#b58a4e"/></svg><b class="rv" id="rv-wood">0</b><span class="rr" id="rr-wood">+0.0/s</span></div>
       <div class="res" id="res-gold" title="Oro"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.6" fill="#e0b64a" stroke="#8a6d1c" stroke-width="1.2"/><circle cx="8" cy="8" r="4.2" fill="none" stroke="#a8842a" stroke-width="1"/><path d="M6.2 5.6h3.6M8 5.6v5" stroke="#8a6d1c" stroke-width="1.1" stroke-linecap="round"/></svg><b class="rv" id="rv-gold">0</b><span class="rr" id="rr-gold">+0.0/s</span></div>
+      <div class="res" id="res-stone" title="Piedra"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 12 6 5l3.2 2 4.5-4.2 2.8 9.2Z" fill="#8d939c"/><path d="M6 5l2.5 2.4L6 12 3 8.2Z" fill="#62676f"/><path d="M9.2 7l4.5-4.2 2.8 9.2-4.2 1Z" fill="#54595f"/><path d="M7.8 6.2l2 1.8" stroke="#3c4046" stroke-width=".8"/></svg><b class="rv" id="rv-stone">0</b><span class="rr" id="rr-stone">+0.0/s</span></div>
     </div>
     <div id="era-wrap">
       <span id="diff-inline"></span>
@@ -342,7 +429,7 @@ html,body{margin:0;padding:0;height:100%;overflow:hidden;background:#0d150f;
   </div>
 </header>
 
-<div id="herald"></div>
+<div id="herald" role="status" aria-live="polite" aria-atomic="true"></div>
 <div id="age-flash"></div>
 
 <footer id="dock">
@@ -364,6 +451,44 @@ html,body{margin:0;padding:0;height:100%;overflow:hidden;background:#0d150f;
         <div><div class="eng-name">Mina <i class="lvl">Nv 0</i></div><div class="eng-rate">+0.0 oro/s</div>
         <button class="btn buy" data-eng="mine"><span>Levantar</span> <span class="cost"><b>70</b><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.4" fill="#e0b64a" stroke="#8a6d1c" stroke-width="1.2"/></svg></span></button></div>
       </div>
+      <div class="eng" id="eng-quarry">
+        <svg class="eic" viewBox="0 0 32 32" aria-hidden="true"><path d="M4 27 11 10l8 6 4-5 8 16Z" fill="#8d939c"/><path d="M11 10l6 5.4L11 27 7 19Z" fill="#62676f"/><path d="M19 16l4-5 8 16-6 1.5Z" fill="#54595f"/><path d="M15.5 12.5l3 2.7" stroke="#3c4046" stroke-width="1.4"/><circle cx="14" cy="27.4" r="1.5" fill="#e0b64a" opacity=".85"/></svg>
+        <div><div class="eng-name">Cantera <i class="lvl">Nv 0</i></div><div class="eng-rate">+0.0 piedra/s</div>
+        <button class="btn buy" data-eng="quarry"><span>Levantar</span> <span class="cost"><b>60</b><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 12 6 5l3.2 2 4.5-4.2 2.8 9.2Z" fill="#8d939c"/><path d="M6 5l2.5 2.4L6 12 3 8.2Z" fill="#62676f"/></svg></span></button></div>
+      </div>
+    </div>
+  </section>
+  <section class="dock-sec" id="prado-sec" aria-labelledby="prado-title">
+    <div class="sec-title" id="prado-title">El Prado · segundo frente<i class="sec-hint">R incursión · Y guardia · H objetivo</i></div>
+    <div class="prado-row">
+      <button class="btn prado-build" id="prado-store" type="button"><span class="prado-sprite" aria-hidden="true"></span><span class="prado-copy"><b>Almacén</b><i id="prado-store-lvl">0/3</i></span></button>
+      <button class="btn prado-build" id="prado-watch" type="button"><span class="prado-sprite" aria-hidden="true"></span><span class="prado-copy"><b>Vigía</b><i id="prado-watch-lvl">0/2</i></span></button>
+      <button class="btn prado-build" id="prado-camp" type="button"><span class="prado-sprite" aria-hidden="true"></span><span class="prado-copy"><b>Campamento</b><i id="prado-camp-lvl">0/1</i></span></button>
+      <button class="btn prado-unit" id="prado-raider" type="button"><span class="prado-sprite" aria-hidden="true"></span><span class="prado-copy"><b>Saboteador</b><i>R · incursión</i></span></button>
+      <button class="btn prado-unit" id="prado-warden" type="button"><span class="prado-sprite" aria-hidden="true"></span><span class="prado-copy"><b>Guardián</b><i>Y · defensa</i></span></button>
+      <div id="prado-status" role="status" aria-live="polite">Sin destacamento en el Prado</div>
+    </div>
+    <div id="prado-targets" aria-label="Objetivo de incursión del Prado">
+      <span class="pixel-chip">Objetivo</span>
+      <button class="btn active" type="button" data-prado-target="farm">Granja</button>
+      <button class="btn" type="button" data-prado-target="wood">Madera</button>
+      <button class="btn" type="button" data-prado-target="mine">Oro</button>
+      <button class="btn" type="button" data-prado-target="quarry">Piedra</button>
+    </div>
+  </section>
+  <section class="dock-sec" id="def-sec">
+    <div class="sec-title">Defensa<i class="sec-hint">B · N</i></div>
+    <div class="row">
+      <div class="eng" id="def-wall">
+        <svg class="eic" viewBox="0 0 32 32" aria-hidden="true"><path d="M4 25h24v-4H4Z" fill="#7c828c"/><path d="M6 21v-6l6 3 4-4 4 4 6-3v6Z" fill="#6e747c"/><path d="M4 21l24 4" stroke="#565b62" stroke-width="1.5"/><path d="M9 25v4h4v-4M19 25v4h4v-4" stroke="#565b62" stroke-width="1.6"/><rect x="13.8" y="21" width="4.4" height="4.4" rx="1" fill="#241a0e"/></svg>
+        <div><div class="eng-name">Muralla <i class="lvl">Cerrada</i></div><div class="eng-rate">bloquea el asalto</div>
+        <button class="btn buy" data-def="wall"><span>Levantar</span> <span class="cost"><b>40</b><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 12 6 5l3.2 2 4.5-4.2 2.8 9.2Z" fill="#8d939c"/><path d="M6 5l2.5 2.4L6 12 3 8.2Z" fill="#62676f"/></svg><b>20</b><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="2" y="6" width="12" height="5.6" rx="2.8" fill="#7a5230"/><circle cx="4.8" cy="8.8" r="1.9" fill="#a5793f"/></svg></span></button></div>
+      </div>
+      <div class="eng" id="def-tower">
+        <svg class="eic" viewBox="0 0 32 32" aria-hidden="true"><rect x="11" y="6" width="10" height="20" fill="#7c828c"/><path d="M11 6l3-3 2 3 2-3 2 3 1-3 2 6H11Z" fill="#565b62"/><rect x="11" y="6" width="10" height="4" fill="#959ca6"/><rect x="15.4" y="12" width="1.2" height="8" fill="#241a0e"/><rect x="11" y="26" width="10" height="3" fill="#6e747c"/></svg>
+        <div><div class="eng-name">Torre <i class="lvl">0/2</i></div><div class="eng-rate">dispara al asedio</div>
+        <button class="btn buy" data-def="tower"><span>Levantar</span> <span class="cost"><b>70</b><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 12 6 5l3.2 2 4.5-4.2 2.8 9.2Z" fill="#8d939c"/><path d="M6 5l2.5 2.4L6 12 3 8.2Z" fill="#62676f"/></svg><b>60</b><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="2" y="6" width="12" height="5.6" rx="2.8" fill="#7a5230"/><circle cx="4.8" cy="8.8" r="1.9" fill="#a5793f"/></svg><b>30</b><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.4" fill="#e0b64a" stroke="#8a6d1c" stroke-width="1.2"/></svg></span></button></div>
+      </div>
     </div>
   </section>
   <section class="dock-sec" id="recruit-sec">
@@ -377,6 +502,14 @@ html,body{margin:0;padding:0;height:100%;overflow:hidden;background:#0d150f;
       <button class="btn buy" id="upg-def"><span>Armadura</span><span class="pips" id="upg-def-pips"></span><span class="cost" id="upg-def-cost"></span></button>
     </div>
   </section>
+  <section class="dock-sec" id="tech-sec">
+    <div class="sec-title">Tecnología Única<i class="sec-hint">T</i></div>
+    <button class="btn buy" id="tech-btn"><span id="tech-name">—</span><span class="cost" id="tech-cost"></span></button>
+  </section>
+  <section class="dock-sec" id="wonder-sec">
+    <div class="sec-title">Maravilla<i class="sec-hint">U</i></div>
+    <button class="btn buy" id="wonder-btn"><span id="wonder-name">Levantar la Maravilla</span><span class="cost" id="wonder-cost"></span></button>
+  </section>
   <section class="dock-sec" id="form-sec">
     <div class="sec-title">Formación<i class="sec-hint">G</i></div>
     <button class="btn" id="formbtn" title="G para cambiar de formación"><span id="formlbl">Libre</span></button>
@@ -384,7 +517,8 @@ html,body{margin:0;padding:0;height:100%;overflow:hidden;background:#0d150f;
   <section class="dock-sec" id="speed-sec">
     <div class="sec-title">Ritmo<i class="sec-hint">V · +/−</i></div>
     <button class="btn" id="speedbtn" title="V para alternar, +/− para ajustar"><span id="speedlbl">x1</span></button>
-    <div id="vol-wrap"><label id="vol-ico">🔊</label><input type="range" id="vol-slider" min="0" max="100" value="80"></div>
+    <button class="btn" id="pausebtn" type="button" aria-label="Pausar partida" aria-pressed="false">Pausa</button>
+    <div id="vol-wrap"><label id="vol-label" for="vol-slider">Volumen</label><span id="vol-ico" aria-hidden="true">🔊</span><input type="range" id="vol-slider" min="0" max="100" value="80" aria-label="Volumen"></div>
   </section>
   <section class="dock-sec" id="codex-sec">
     <div class="sec-title">Codex<i class="sec-hint">C</i></div>
@@ -392,12 +526,13 @@ html,body{margin:0;padding:0;height:100%;overflow:hidden;background:#0d150f;
   </section>
 </footer>
 
-<div id="hint">1–9 reclutar · F edad · Q/W mejoras · G formación · V / + / − ritmo · M silencio · C codex · la caballería raidea economía rival</div>
-<div id="toast"></div>
+<div id="hint">1–9 ejército · R saboteador · Y guardián · H objetivo del Prado · F edad · Q/W mejoras · T tecnología · U maravilla · B/N defensa · G formación · V ritmo · M silencio · C codex</div>
+<div id="toast" role="status" aria-live="polite" aria-atomic="true"></div>
 
-<div id="overlay">
+<div id="overlay" role="dialog" aria-modal="true" aria-labelledby="over-title" aria-hidden="true">
   <div id="over-panel">
     <div class="orn">&#10022; &nbsp;&#10022;&nbsp; &#10022;</div>
+    <img id="over-emblem" class="pixel-art" src="assets/battle-ages-emblem.webp" alt="Emblema de Battle Ages">
     <h1 id="over-title">VICTORIA</h1>
     <p id="over-sub"></p>
     <div class="stats">
@@ -418,9 +553,10 @@ html,body{margin:0;padding:0;height:100%;overflow:hidden;background:#0d150f;
   </div>
 </div>
 
-<div id="civpick">
+<div id="civpick" role="dialog" aria-modal="true" aria-labelledby="civpick-title" aria-hidden="false">
   <div id="civpick-panel">
     <div class="orn">&#10022; &nbsp;&#10022;&nbsp; &#10022;</div>
+    <img id="civ-emblem" class="pixel-art" src="assets/battle-ages-emblem.webp" alt="Emblema de Battle Ages">
     <h1 id="civpick-title">Elige tu casa</h1>
     <p id="civpick-sub">Ocho grandes casas se disputan el valle, cada una con su unidad única y su doctrina de guerra.</p>
     <div id="civ-grid"></div>
@@ -430,7 +566,7 @@ html,body{margin:0;padding:0;height:100%;overflow:hidden;background:#0d150f;
   </div>
 </div>
 
-<div id="codex">
+<div id="codex" role="dialog" aria-modal="true" aria-labelledby="codex-title" aria-hidden="true">
   <div id="codex-panel">
     <div id="codex-head">
       <h1 id="codex-title">El Codex del Valle</h1>
@@ -439,6 +575,10 @@ html,body{margin:0;padding:0;height:100%;overflow:hidden;background:#0d150f;
     <div id="codex-tabs"></div>
     <div id="codex-body"></div>
   </div>
+</div>
+
+<div id="pause-overlay" role="dialog" aria-modal="true" aria-labelledby="pause-title" aria-hidden="true">
+  <div id="pause-panel"><h2 id="pause-title">Partida en pausa</h2><p>El valle espera vuestras órdenes.</p><button class="btn" id="resume-btn" type="button">Continuar</button></div>
 </div>
 <script>
 
@@ -455,15 +595,37 @@ const AGES=[
   {name:'Edad Imperial', num:'IV', cost:{food:850,gold:380}}
 ];
 const AGE_UNLOCK={1:['Arqueros y Jinete Ligero','ingresos +25%'],2:['Caballero, Ballestero y Mangonel','veteranía: +25% daño y vidas'],3:['Élite, Arcabucero y Bombarda','veteranía: +25% daño y vidas']};
-const AGE_TIME=8, CASTLE_HP=2000, QUEUE_CAP=6, ENG_CAP=8, SIDE_CAP=42;
-const castleMaxHp=side=>CASTLE_HP*(1+0.12*S.sides[side].age);
-const BASE_INCOME={food:4.5, wood:2.5, gold:1.8};
+const AGE_TIME=8, CASTLE_HP=1700, QUEUE_CAP=6, ENG_CAP=8, SIDE_CAP=42;
+const castleMaxHp=side=>CASTLE_HP*(1+0.12*S.sides[side].age)*defHpMul(side);
+const BASE_INCOME={food:4.5, wood:2.5, gold:1.8, stone:0.9};
+const ECON_PACE=1.12;
 const ENGINES={
   farm:{name:'Granja',    res:'food', rate:2.2, base:60, growth:1.55, costRes:'food'},
   wood:{name:'Aserradero',res:'wood', rate:1.8, base:60, growth:1.55, costRes:'wood'},
-  mine:{name:'Mina',      res:'gold', rate:1.5, base:70, growth:1.60, costRes:'gold'}
+  mine:{name:'Mina',      res:'gold', rate:1.5, base:70, growth:1.60, costRes:'gold'},
+  quarry:{name:'Cantera', res:'stone',rate:1.4, base:60, growth:1.60, costRes:'wood'}
 };
+const MEADOW_STRUCTURES={
+  store:{name:'Almacén',age:1,max:3,cost:{wood:120,stone:35},desc:'+6% a toda la producción por edificio'},
+  watch:{name:'Puesto de Vigía',age:1,max:2,cost:{wood:95,stone:65},desc:'dispara a los incursores del Prado',hp:260,range:245,dmg:13,cd:0.9},
+  camp:{name:'Campamento de Incursión',age:2,max:1,cost:{wood:150,gold:90},desc:'desbloquea Saboteadores'}
+};
+const MEADOW_TARGETS=['farm','wood','mine','quarry'];
+const MEADOW_UNIT_CAP=8;
 const CASTLE_DEF_DMG=12, CASTLE_DEF_RANGE=210, CASTLE_DEF_CD=0.8;
+/* ---- Defensa construible: muralla (puerta) y torres de vigilancia ----
+   La muralla se levanta delante del castillo y hay que derribarla para llegar
+   a la puerta; las torres acribillan a quien se acerque y también son objetivo. */
+const WALL_FRONT=120, TOWER_FRONT=44;
+const DEFENSE={
+  wall:{name:'Muralla', cost:{stone:40,wood:20}, hp:[0,320,440,580], max:3},
+  tower:{name:'Torre',  cost:{stone:70,wood:60,gold:30}, hp:300, range:235, dmg:11, cd:0.9, max:2}
+};
+const WALL_REPAIR={stone:30,wood:15};
+/* ---- Maravilla: condición alternativa de victoria (AoE4). Quien la levanta
+   y la mantiene en pie durante WONDER.time segundos gana al instante. Es
+   carísima y exige edad Imperial; el enemigo debe derribarla a tiempo. ---- */
+const WONDER={cost:{food:320,wood:320,gold:320,stone:220}, hp:1300, time:45, age:3};
 /* Roster inspirado en AoE4: clases, edad de desbloqueo y counters fieles,
    con escala de HP/daño propia del minijuego. Claves de bonus: tipos exactos
    o clases ('cav', 'ranged', 'heavy', 'siege'). */
@@ -477,6 +639,8 @@ const UNITS={
   elite:   {name:'Élite',       cost:{food:170,gold:130},    hp:300, dmg:24,  spd:82, range:18,  cd:0.90, train:9.0,  age:3, kind:'elitecav', row:'cav', mount:true, heavy:true, elite:true, raid:true, bonus:{cav:1.25, lancer:1.25, ranged:1.8, siege:2.4}},
   mangonel:{name:'Mangonel',    cost:{wood:140,gold:110},    hp:95,  dmg:15,  spd:30, range:165, cd:2.60, train:9.0,  age:2, kind:'mangonel', row:'cav', ranged:true, siege:true, splash:48, bonus:{ranged:1.5, siege:1.5}},
   bombard: {name:'Bombarda',    cost:{wood:210,gold:230},    hp:150, dmg:34,  spd:26, range:225, cd:3.20, train:14.0, age:3, kind:'bombard',  row:'cav', ranged:true, siege:true, gunpowder:true, castleBonus:8, bonus:{heavy:1.5, siege:1.5}},
+  saboteur:{name:'Saboteador',   cost:{food:45,gold:70},      hp:58,  dmg:15,  spd:82, range:15,  cd:0.85, train:6.0, age:2, kind:'saboteur',row:'meadow',meadow:true,raid:true,raidPower:1.8},
+  warden:  {name:'Guardián',     cost:{food:85,wood:45},      hp:125, dmg:14,  spd:66, range:18,  cd:0.85, train:6.5, age:1, kind:'warden',  row:'meadow',meadow:true,guard:true,bonus:{saboteur:2.1}},
   /* ---- unidades únicas por civilización ---- */
   longbow:    {name:'Longbowman',    cost:{wood:50,gold:25},   hp:48,  dmg:8,  spd:42, range:150, cd:1.30, train:5.0,  age:1, kind:'bow', row:'inf', ranged:true, longbow:true, unique:'english', bonus:{lancer:1.6}},
   royal:      {name:'C. Real',       cost:{food:150,gold:110}, hp:290, dmg:24, spd:82, range:18,  cd:0.90, train:8.5,  age:3, kind:'elitecav', row:'cav', mount:true, heavy:true, elite:true, raid:true, fleur:true, unique:'french', bonus:{cav:1.25, lancer:1.25, ranged:1.8, siege:2.4}},
@@ -512,7 +676,36 @@ const CIV_STATMUL={
   chinese:(d,m)=>{if(d.gunpowder||d.siege)m.dmg*=1.15;},
   delhi:(d,m)=>{if(d.mount&&!d.siege)m.hp*=1.12;}
 };
-const NODE_NAME={farm:'la granja', wood:'el aserradero', mine:'la mina de oro'};
+const NODE_NAME={farm:'la granja', wood:'el aserradero', mine:'la mina de oro', quarry:'la cantera'};
+/* ---- Tecnología única por civilización: un estudio insigne al estilo AoE4.
+   El jugador la investiga 1 vez por partida (botón T, exige una edad y oro);
+   la IA también la usa. Cada una refuerza la doctrina de su casa. ---- */
+const CIV_TECH={
+  english:{name:'Guerra de los Cien Arcos', age:2, cost:{wood:90,gold:90},
+    desc:'Arqueros y longbowman: +15% de daño. Los flechazos cruzan el campo.',
+    fx:(d,m)=>{if(d.ranged&&!d.siege)m.dmg*=1.15;}},
+  french:{name:'Corazas de Limoges', age:2, cost:{food:90,gold:90},
+    desc:'Caballería pesada y real: +15% de vida. El acero de Limoges no se rompe.',
+    fx:(d,m)=>{if(d.mount&&!d.siege)m.hp*=1.15;}},
+  mongols:{name:'Técnicas de la Estepa', age:2, cost:{food:90,gold:70},
+    desc:'Unidades montadas: +12% de velocidad. Los caballos vuelan sobre la estepa.',
+    fx:(d,m)=>{if(d.mount)m.spd*=1.12;}},
+  hre:{name:'Cruzada del Sacro Imperio', age:2, cost:{food:90,wood:70},
+    desc:'Infantería a pie: +15% de daño. La fe templa el filo.',
+    fx:(d,m)=>{if(!d.mount&&!d.ranged&&!d.siege)m.dmg*=1.15;}},
+  chinese:{name:'Secretos de la Pólvora', age:3, cost:{food:100,gold:100},
+    desc:'Pólvora y asedio: +20% de daño. El trueno de los cohetes atruena el valle.',
+    fx:(d,m)=>{if(d.gunpowder||d.siege)m.dmg*=1.2;}},
+  ottomans:{name:'Cuerpo de Artillería Imperial', age:3, cost:{food:110,gold:120},
+    desc:'Pólvora: +15% de daño y +12% de vida. Las bocas de fuego rugen al unísono.',
+    fx:(d,m)=>{if(d.gunpowder){m.dmg*=1.15;m.hp*=1.12;}}},
+  rus:{name:'Fortaleza de Novgorod', age:2, cost:{wood:100,gold:80},
+    desc:'Castillo, muralla y torres: +15% de vida. Las piedras de Novgorod son eternas.',
+    fx:null, defHp:1.15},
+  delhi:{name:'Bendición del Ganges', age:2, cost:{food:110,gold:110},
+    desc:'Elefantes y unidades montadas: +20% de vida. Los paquidermos avanzan sagrados.',
+    fx:(d,m)=>{if(d.mount&&!d.siege)m.hp*=1.2;}}
+};
 /* ---- Herrería: forja (ataque) y armadura, mejora por edad al estilo AoE ---- */
 const UPG={
   atk:{name:'Forja',    max:3, step:0.12, age:[1,2,3],
@@ -526,10 +719,14 @@ const AI_TRAIN_INT=[10,7.5,6.5,5.5];
 const AI_ARMY_TARGET=[5,7,9,12];
 /* ---- Dificultad: escala la economía, cadencia, ejército y edades de la IA ---- */
 const DIFF=[
-  {name:'Fácil',   eff:0.62, trainMul:1.60, armyMul:0.55, ageMul:1.50, upgCad:12},
-  {name:'Normal',  eff:1.00, trainMul:1.00, armyMul:1.00, ageMul:1.00, upgCad:6},
-  {name:'Difícil', eff:1.22, trainMul:0.80, armyMul:1.25, ageMul:0.85, upgCad:5},
-  {name:'Extremo', eff:1.50, trainMul:0.62, armyMul:1.50, ageMul:0.72, upgCad:4}
+  {name:'Fácil',   eff:0.60, trainMul:1.65, armyMul:0.55, ageMul:1.52, upgCad:12, pEco:1.12, pHp:1.05, pDmg:1.20,
+    hint:'IA relajada: tu economía crece mejor y tus tropas resisten y golpean más.'},
+  {name:'Normal',  eff:0.85, trainMul:1.15, armyMul:0.85, ageMul:1.15, upgCad:8, pEco:1.02, pHp:1.01, pDmg:1.02,
+    hint:'Partida equilibrada: ni la IA ni el jugador reciben ventajas directas.'},
+  {name:'Difícil', eff:1.01, trainMul:1.02, armyMul:1.02, ageMul:1.02, upgCad:7, pEco:1.04, pHp:1.03, pDmg:1.08,
+    hint:'IA agresiva: avanza, se rearma y mantiene la presión sobre tus fronteras.'},
+  {name:'Extremo', eff:1.50, trainMul:0.62, armyMul:1.50, ageMul:0.72, upgCad:4, pEco:1, pHp:1, pDmg:1,
+    hint:'IA implacable: presión máxima, ataques frecuentes y poco margen para reaccionar.'}
 ];
 /* Doctrina de counters (fiel a AoE4): arcos→lanzas, caballería→arcos y economía,
    lanzas→caballería, ballesta/pólvora→pesados, caballería→máquinas de asedio. */
@@ -552,7 +749,9 @@ const rr=(a,b)=>a+Math.random()*(b-a);
 const engCost=(k,lvl)=>Math.round(ENGINES[k].base*Math.pow(ENGINES[k].growth,lvl));
 function canAfford(side,cost){const s=S.sides[side];for(const k in cost)if(s.res[k]<cost[k])return false;return true;}
 function pay(side,cost){const s=S.sides[side];for(const k in cost)s.res[k]-=cost[k];}
-const armyCount=side=>S.units.reduce((n,u)=>n+(u.side===side&&!u.dying?1:0),0);
+const armyCount=side=>S.units.reduce((n,u)=>n+(u.side===side&&!u.dying&&u.front!=='meadow'?1:0),0);
+const meadowCount=(side,type)=>S.units.reduce((n,u)=>n+(u.side===side&&!u.dying&&u.front==='meadow'&&(!type||u.type===type)?1:0),0);
+const meadowCommittedCount=(side,type)=>meadowCount(side,type)+S.sides[side].queue.reduce((n,q)=>n+(UNITS[q.type].meadow&&(!type||q.type===type)?1:0),0);
 const fmtT=s=>Math.floor(s/60)+':'+String(Math.floor(s%60)).padStart(2,'0');
 /* La formación manda en el ejército del jugador; la IA marcha en libre */
 const formationOf=side=>side==='P'?FORMATIONS[S.form]:FORMATIONS[0];
@@ -586,6 +785,77 @@ let S=null;
 let muted=false; // preferencia de silencio: persiste entre partidas (tecla M)
 let gameSpeed=1; // ritmo de partida x1/x2/x4 (tecla V o +/−)
 let difficulty=1; // índice en DIFF (Normal por defecto)
+let manualPaused=false;
+const dialogFocus={};
+function focusSafe(node){
+  if(!node||typeof node.focus!=='function')return;
+  try{node.focus({preventScroll:true});}catch(e){try{node.focus();}catch(_){}}
+}
+function rememberDialogFocus(dialog){
+  if(!dialog||dialogFocus[dialog.id]!==undefined)return;
+  dialogFocus[dialog.id]=document.activeElement;
+}
+function restoreDialogFocus(dialog){
+  if(!dialog)return;
+  const prev=dialogFocus[dialog.id];
+  delete dialogFocus[dialog.id];
+  if(prev&&prev.isConnected&&!prev.closest('[aria-hidden="true"]'))focusSafe(prev);
+}
+function focusDialog(dialog,preferred){
+  if(!dialog)return;
+  const target=preferred||dialog.querySelector('button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[href],[tabindex]:not([tabindex="-1"])');
+  focusSafe(target);
+}
+function visibleDialog(){
+  const ids=['pause-overlay','codex','overlay','civpick'];
+  for(const id of ids){const d=document.getElementById(id);if(d&&d.classList.contains('show')&&d.getAttribute('aria-hidden')!=='true')return d;}
+  return null;
+}
+function trapDialogTab(e){
+  if(e.key!=='Tab')return;
+  const dialog=visibleDialog();
+  if(!dialog)return;
+  const nodes=[...dialog.querySelectorAll('button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),a[href],[tabindex]:not([tabindex="-1"])')];
+  if(!nodes.length)return;
+  const current=document.activeElement,idx=nodes.indexOf(current);
+  let next;
+  if(e.shiftKey)next=idx<=0?nodes[nodes.length-1]:nodes[idx-1];
+  else next=idx<0||idx===nodes.length-1?nodes[0]:nodes[idx+1];
+  e.preventDefault();focusSafe(next);
+}
+const PREF_KEY='battle-ages:prefs:v1';
+function loadPreferences(){
+  try{
+    const p=JSON.parse(localStorage.getItem(PREF_KEY)||'{}');
+    if(typeof p.difficulty==='number')difficulty=clamp(p.difficulty|0,0,3);
+    if(SPEEDS.includes(p.speed))gameSpeed=p.speed;
+    if(typeof p.muted==='boolean')muted=p.muted;
+    if(typeof p.volume==='number'&&typeof Snd!=='undefined')Snd.vol=clamp(p.volume,0,1);
+  }catch(e){}
+}
+function savePreferences(){
+  try{localStorage.setItem(PREF_KEY,JSON.stringify({difficulty,speed:gameSpeed,muted,volume:typeof Snd!=='undefined'?Snd.getVolume():0.8}));}catch(e){}
+}
+function syncPauseUI(){
+  if(!el.pauseBtn)return;
+  el.pauseBtn.textContent=manualPaused?'Continuar':'Pausa';
+  el.pauseBtn.setAttribute('aria-label',manualPaused?'Reanudar partida':'Pausar partida');
+  el.pauseBtn.setAttribute('aria-pressed',String(manualPaused));
+  if(el.pauseOverlay){el.pauseOverlay.classList.toggle('show',manualPaused);el.pauseOverlay.setAttribute('aria-hidden',String(!manualPaused));}
+}
+function setPaused(v){
+  const next=!!v;
+  if(next===manualPaused)return;
+  if(next)rememberDialogFocus(el.pauseOverlay);
+  manualPaused=next;
+  if(manualPaused)Mus.stop(); else {last=performance.now();if(S&&!S.over&&!el.civpick.classList.contains('show'))Mus.start();}
+  syncPauseUI();
+  if(next)focusDialog(el.pauseOverlay,el.resumeBtn); else restoreDialogFocus(el.pauseOverlay);
+}
+function togglePause(){
+  if(!S||S.over||el.civpick.classList.contains('show')||el.codex.classList.contains('show'))return;
+  setPaused(!manualPaused);
+}
 const SPEEDS=[1,2,4];
 function setSpeed(v){
   v=SPEEDS.includes(v)?v:1;
@@ -594,6 +864,7 @@ function setSpeed(v){
   if(el.speedLbl)el.speedLbl.textContent='x'+v;
   if(el.speedBtn)el.speedBtn.classList.toggle('hot',v>1);
   if(S)toast('Ritmo de la contienda: x'+v);
+  savePreferences();
 }
 function cycleSpeed(dir){
   const i=SPEEDS.indexOf(gameSpeed);
@@ -621,19 +892,23 @@ function syncForm(){
   el.formBtn.title='G para cambiar de formación: '+f.name+' ('+f.hint+')';
 }
 function newSide(){
-  return {res:{food:150,wood:120,gold:100}, eng:{farm:0,wood:0,mine:0},
-    workers:{farm:{alive:0,max:0,hp:0,rt:0}, wood:{alive:0,max:0,hp:0,rt:0}, mine:{alive:0,max:0,hp:0,rt:0}},
-    lastRaid:{food:-99,wood:-99,gold:-99},
-    age:0, aging:false, ageT:0, queue:[], stats:{trained:0,lost:0,gathered:0}, castleHp:CASTLE_HP, upg:{atk:0,def:0}};
+  return {res:{food:150,wood:120,gold:100,stone:60}, eng:{farm:0,wood:0,mine:0,quarry:0},
+    workers:{farm:{alive:0,max:0,hp:0,rt:0}, wood:{alive:0,max:0,hp:0,rt:0}, mine:{alive:0,max:0,hp:0,rt:0}, quarry:{alive:0,max:0,hp:0,rt:0}},
+    lastRaid:{food:-99,wood:-99,gold:-99,stone:-99},
+    age:0, aging:false, ageT:0, queue:[], stats:{trained:0,lost:0,gathered:0}, castleHp:CASTLE_HP, upg:{atk:0,def:0}, tech:false,
+    wonder:{built:false,hp:0,max:0,t:0},
+    meadow:{store:0,watch:0,camp:0,target:'farm',watchCd:0,raids:0,defended:0},
+    def:{wall:{lvl:0,hp:0}, towers:[]}};
 }
 function newGame(pCiv,eCiv){
+  manualPaused=false;
   S={t:0, over:false, winner:null, overT:0, shownOver:false, shake:0,
     sides:{P:newSide(), E:newSide()},
-    units:[], arrows:[], parts:[], nums:[], rings:[],
+    units:[], arrows:[], parts:[], nums:[], rings:[], torches:[],
     clouds:[], birds:[], birdT:rr(4,9),
-    playerRecent:[], aiThinkT:1.0, aiTrainT:5.0, aiEngT:0, aiUpgT:0, aiPlan:'lancer', aiAlarm:0,
-    raidWarn:{P:{farm:-99,wood:-99,mine:-99}, E:{farm:-99,wood:-99,mine:-99}},
-    raidEnd:{P:{farm:false,wood:false,mine:false}, E:{farm:false,wood:false,mine:false}},
+    playerRecent:[], aiThinkT:1.0, aiTrainT:5.0, aiEngT:0, aiUpgT:0, aiDefT:8, aiMeadowT:6, aiPlan:'lancer', aiAlarm:0,
+    raidWarn:{P:{farm:-99,wood:-99,mine:-99,quarry:-99}, E:{farm:-99,wood:-99,mine:-99,quarry:-99}},
+    raidEnd:{P:{farm:false,wood:false,mine:false,quarry:false}, E:{farm:false,wood:false,mine:false,quarry:false}},
     herald:[], atkWarn:{P:-99,E:-99}, form:0};
   S.sides.P.civ=pCiv||null;
   S.sides.E.civ=eCiv||null;
@@ -641,6 +916,7 @@ function newGame(pCiv,eCiv){
   buildArmyDock();
   refreshCivHud();
   syncForm();
+  syncPauseUI();
   overShown(false);
   el.heraldEl.innerHTML='';
   heraldSay(S.sides.E.civ
@@ -648,6 +924,7 @@ function newGame(pCiv,eCiv){
     :'Heraldo: «¡A las armas! Casa Vermell codicia este valle.»','gold');
   if(S.sides.P.civ)heraldSay('Vuestra doctrina: '+CIVS[S.sides.P.civ].bonus+'. Unidad única: '+UNITS[CIVS[S.sides.P.civ].unit].name+'.','');
   Mus.start();
+  uiTick();
 }
 /* Coste efectivo de una unidad con la doctrina de la civ aplicada */
 function unitCost(side,type){
@@ -661,6 +938,10 @@ function unitCost(side,type){
 }
 
 /* ---- Economía ---- */
+function incomeMul(side){
+  const d=DIFF[difficulty];
+  return side==='P'?d.pEco:d.eff;
+}
 function incomeOf(side,res){
   const s=S.sides[side];
   let r=BASE_INCOME[res];
@@ -672,7 +953,7 @@ function incomeOf(side,res){
     const ratio=w.max>0?w.alive/w.max:0;
     r+=s.eng[k]*ENGINES[k].rate*ratio;
   }
-  r*=CUM[s.age];
+  r*=CUM[s.age]*incomeMul(side)*ECON_PACE*(1+s.meadow.store*0.06);
   return r;
 }
 function addEngine(side,k){
@@ -682,9 +963,8 @@ function addEngine(side,k){
 function economyTick(dt){
   for(const side of ['P','E']){
     const s=S.sides[side];
-    const eff=(side==='E'?DIFF[difficulty].eff:1);
     let totalInc=0;
-    for(const res of ['food','wood','gold']){const inc=incomeOf(side,res)*dt*eff;s.res[res]+=inc;totalInc+=inc;}
+    for(const res of ['food','wood','gold','stone']){const inc=incomeOf(side,res)*dt;s.res[res]+=inc;totalInc+=inc;}
     s.stats.gathered+=totalInc;
     // los aldeanos caídos vuelven al tajo poco a poco (el raideo es un parón, no un borrado)
     for(const k in ENGINES){
@@ -743,6 +1023,27 @@ function playerBuyUpg(k){
   if(S.over)return;
   if(!buyUpg('P',k)){Snd.thud();const el2=el.upgBtn[k];if(el2)el2.classList.remove('deny');void(el2&&el2.offsetWidth);if(el2)el2.classList.add('deny');}
 }
+function buyCivTech(side){ // tecnología única de la civilización: 1 vez por partida
+  const s=S.sides[side], civId=s.civ;
+  if(!civId||s.tech)return false;
+  const t=CIV_TECH[civId];
+  if(s.age<t.age)return false;
+  if(!canAfford(side,t.cost))return false;
+  pay(side,t.cost);
+  s.tech=true;
+  if(t.defHp){ // los Rus refuerzan su castillo al investigar
+    s.castleHp=Math.min(s.castleHp+CASTLE_HP*0.15*t.defHp,castleMaxHp(side));
+  }
+  if(side==='P'){
+    Snd.train();
+    heraldSay('¡'+t.name+' investigada! '+t.desc,'gold');
+  }
+  return true;
+}
+function playerBuyCivTech(){
+  if(S.over)return;
+  if(!buyCivTech('P')){Snd.thud();const b=el.techBtn;if(b){b.classList.remove('deny');void b.offsetWidth;b.classList.add('deny');}}
+}
 function playerAgeUp(){
   if(S.over)return;
   const s=S.sides.P;
@@ -759,6 +1060,64 @@ function flashGold(){
 
 /* ---- Entrenamiento ---- */
 function queueLen(side){return S.sides[side].queue.length;}
+function meadowStructurePos(side,k){
+  const dir=side==='P'?1:-1,base=clamp(W*0.10,90,135),gap=clamp(W*0.08,70,105);
+  const slot=base+({store:0,watch:1,camp:2}[k]||0)*gap;
+  return {x:castleFrontX(side)+dir*slot,y:H*0.565};
+}
+function buildMeadowStructure(side,k){
+  const def=MEADOW_STRUCTURES[k],s=S.sides[side];
+  if(!def||s.age<def.age||s.meadow[k]>=def.max||!canAfford(side,def.cost))return false;
+  pay(side,def.cost);s.meadow[k]++;
+  S.rings.push({...meadowStructurePos(side,k),r:8,t:0.6,side});
+  if(side==='P'){
+    Snd.build();
+    heraldSay(def.name+' levantado en el Prado. '+def.desc+'.','gold');
+  }
+  detailDirty=true;
+  return true;
+}
+function playerBuildMeadow(k){
+  if(S.over||!buildMeadowStructure('P',k)){
+    const b=el.meadowBuild&&el.meadowBuild[k];
+    if(b){b.classList.remove('deny');void b.offsetWidth;b.classList.add('deny');}
+    Snd.thud();
+  }
+}
+function setMeadowTarget(k,announce=true){
+  if(!MEADOW_TARGETS.includes(k))return false;
+  S.sides.P.meadow.target=k;
+  if(announce)toast('Objetivo del Prado: '+NODE_NAME[k].replace(/^la |^el /,''));
+  syncMeadowUI();
+  return true;
+}
+function cycleMeadowTarget(){
+  const i=MEADOW_TARGETS.indexOf(S.sides.P.meadow.target);
+  setMeadowTarget(MEADOW_TARGETS[(i+1)%MEADOW_TARGETS.length]);
+}
+function canDeployMeadow(side,type){
+  const s=S.sides[side],def=UNITS[type];
+  if(!def||!def.meadow||s.age<def.age||queueLen(side)>=QUEUE_CAP||meadowCommittedCount(side)>=MEADOW_UNIT_CAP)return false;
+  if(type==='saboteur'&&s.meadow.camp<1)return false;
+  if(type==='warden'&&s.meadow.watch<1)return false;
+  return canAfford(side,unitCost(side,type));
+}
+function deployMeadow(side,type,target){
+  if(!canDeployMeadow(side,type))return false;
+  trainSide(side,type,{front:'meadow',target:MEADOW_TARGETS.includes(target)?target:'farm'});
+  if(side==='P'){
+    Snd.train();
+    heraldSay(type==='saboteur'?'Saboteador en camino hacia '+NODE_NAME[S.sides.P.meadow.target]+' rival.':'Guardián desplegado para proteger el Prado.','gold');
+  }
+  return true;
+}
+function playerDeployMeadow(type){
+  if(S.over||!deployMeadow('P',type,S.sides.P.meadow.target)){
+    const b=type==='saboteur'?el.meadowRaider:el.meadowWarden;
+    if(b){b.classList.remove('deny');void b.offsetWidth;b.classList.add('deny');}
+    Snd.thud();
+  }
+}
 function playerTrain(type){
   if(S.over||!UNITS[type])return;
   if(S.hotkeys&&!S.hotkeys.includes(type))return; // solo el roster de tu civ
@@ -772,10 +1131,10 @@ function playerTrain(type){
   trainSide('P',type);
   Snd.train();
 }
-function trainSide(side,type){
+function trainSide(side,type,order){
   const s=S.sides[side], def=UNITS[type];
   pay(side,unitCost(side,type));
-  s.queue.push({type,t:def.train,dur:def.train});
+  s.queue.push({type,t:def.train,dur:def.train,order:order||null});
   s.stats.trained++;
   if(side==='P'){S.playerRecent.push(type);if(S.playerRecent.length>16)S.playerRecent.shift();}
 }
@@ -784,29 +1143,45 @@ function queueTick(dt){
     const q=S.sides[side].queue;
     if(!q.length)continue;
     const it=q[0]; it.t-=dt;
-    if(it.t<=0){q.shift();spawnUnit(side,it.type);if(side==='P')Snd.trainDone();}
+    if(it.t<=0){q.shift();spawnUnit(side,it.type,it.order);if(side==='P')Snd.trainDone();}
   }
 }
-function spawnUnit(side,type){
+function spawnUnit(side,type,order){
   const def=UNITS[type], mul=CUM[S.sides[side].age];
-  if(armyCount(side)>=SIDE_CAP)return;
+  const meadow=!!(def.meadow||(order&&order.front==='meadow'));
+  if(meadow?meadowCount(side)>=MEADOW_UNIT_CAP:armyCount(side)>=SIDE_CAP)return;
   const dir=side==='P'?1:-1;
   const sm=statMul(side,def); // bonus de civ (fase 2); sin civ es neutro
-  const slot=armyCount(side);
-  S.units.push({side,type,x:castleFrontX(side)+dir*18,y0:rr(-16,16),
+  const slot=meadow?meadowCount(side):armyCount(side);
+  const front=meadow?'meadow':'battle';
+  const spawnX=meadow?meadowStructurePos(side,'watch').x:castleFrontX(side)+dir*18;
+  S.units.push({side,type,front,meadowTarget:order&&order.target||S.sides[side].meadow.target,x:spawnX,y0:meadow?rr(-10,10):rr(-16,16),
     hp:def.hp*mul*sm.hp,max:def.hp*mul*sm.hp,dmg:def.dmg*mul*sm.dmg,spd:def.spd*sm.spd,
-    cdt:rr(0,0.3),ph:Math.random()*6,flash:0,slot,
+    cdt:rr(0,0.3),ph:Math.random()*6,flash:0,slot,action:'idle',actionT:0,
     dying:false,dieT:0,rally:0,age:S.sides[side].age,
     fy:formYTarget({side,type,slot})});
-  S.rings.push({x:castleFrontX(side)+dir*18,y:laneY(),r:4,t:0.5,side});
+  S.rings.push({x:spawnX,y:meadow?H*0.60:laneY(),r:4,t:0.5,side});
   if(side==='P')Snd.march();
 }
 function statMul(side,def){
   const m={hp:1,dmg:1,spd:1};
   const civId=S.sides[side].civ;
   if(civId&&CIV_STATMUL[civId])CIV_STATMUL[civId](def,m);
+  if(civId&&S.sides[side].tech&&CIV_TECH[civId].fx)CIV_TECH[civId].fx(def,m);
+  if(side==='P'){
+    const d=DIFF[difficulty];
+    m.hp*=d.pHp;
+    m.dmg*=d.pDmg;
+  }
   return m;
 }
+/* la tecnología única de los Rus fortalece castillo, muralla y torres (+15%) */
+function defHpMul(side){
+  const civId=S.sides[side].civ;
+  return civId&&S.sides[side].tech&&CIV_TECH[civId].defHp?CIV_TECH[civId].defHp:1;
+}
+const wallMaxHp=(side,lvl)=>Math.round(DEFENSE.wall.hp[lvl]*defHpMul(side));
+const towerMaxHp=side=>Math.round(DEFENSE.tower.hp*defHpMul(side));
 
 /* ---- Geometría del campo (depende del viewport) ----
    El campo manda: horizonte bajo (~27% del alto), castillo prominente escalado
@@ -816,6 +1191,7 @@ function statMul(side,def){
 let W=960,H=600;
 const CASTLE_M=36; // margen del castillo al borde del mapa
 const laneY=()=>H*0.79;
+const meadowLaneY=()=>H*0.595;
 const castleW=()=>clamp(Math.round(W*0.105),118,195);
 const castleH=()=>clamp(Math.round(H*0.30),158,245);
 const castleBaseY=()=>H*0.845;
@@ -827,26 +1203,115 @@ function castleX(side){
   const w=castleW();
   return side==='P'?CASTLE_M:W-CASTLE_M-w;
 }
-const NODE_OFF={farm:{dx:170,fy:0.615}, wood:{dx:55,fy:0.665}, mine:{dx:300,fy:0.690}};
+/* La muralla se levanta delante de la puerta y las torres flanquean la plaza */
+function wallFrontX(side){return castleFrontX(side)+(side==='P'?WALL_FRONT:-WALL_FRONT);}
+function towerPos(side,i){return {x:castleFrontX(side)+(side==='P'?TOWER_FRONT:-TOWER_FRONT), y:laneY()+(i===0?-30:30)};}
+/* La maravilla corona el centro de la plaza, entre las torres y la muralla */
+function wonderPos(side){return {x:castleFrontX(side)+(side==='P'?WALL_FRONT-26:-WALL_FRONT+26), y:laneY()};}
+const NODE_OFF={farm:{dx:170,fy:0.615}, wood:{dx:55,fy:0.665}, mine:{dx:300,fy:0.690}, quarry:{dx:395,fy:0.660}};
 function nodePos(k,side){
   const m=side==='P'?1:-1, o=NODE_OFF[k];
   return {x:castleFrontX(side)+m*o.dx, y:H*o.fy};
 }
 
+function meadowRaidTarget(u){
+  const foe=u.side==='P'?'E':'P',preferred=MEADOW_TARGETS.includes(u.meadowTarget)?u.meadowTarget:'farm';
+  const first=S.sides[foe].workers[preferred];
+  if(first&&first.alive>0){const p=nodePos(preferred,foe);return {side:foe,k:preferred,x:p.x,y:p.y};}
+  for(const k of MEADOW_TARGETS){
+    if(S.sides[foe].workers[k].alive>0){const p=nodePos(k,foe);return {side:foe,k,x:p.x,y:p.y};}
+  }
+  return null;
+}
+function meadowStrike(u,foe){
+  const def=UNITS[u.type],mult=bonusMult(def,foe.type);
+  u.flash=0.24;u.action='attack';u.actionT=0.28;
+  spark(foe.x,meadowLaneY()+foe.y0-10,4);hitSnd();
+  const before=foe.hp;
+  damageUnit(foe,Math.max(1,Math.round(u.dmg*mult)),mult>1);
+  if(before>0&&foe.dying&&u.type==='warden')S.sides[u.side].meadow.defended++;
+}
+function meadowUnitTick(u,dt,pAlive,eAlive){
+  const def=UNITS[u.type],dir=u.side==='P'?1:-1,spd=u.spd||def.spd;
+  const rivals=(u.side==='P'?eAlive:pAlive).filter(v=>v.front==='meadow'&&!v.dying);
+  let foe=null,bd=1e9;
+  for(const v of rivals){
+    if(def.guard&&v.type!=='saboteur')continue;
+    const d=Math.abs(v.x-u.x)+Math.abs(v.y0-u.y0)*0.4;
+    if(d<bd){bd=d;foe=v;}
+  }
+  const intercept=def.guard?260:58;
+  if(foe&&bd<intercept){
+    if(bd>def.range+4){u.x+=Math.sign(foe.x-u.x)*spd*dt;u.action='walk';}
+    else if(u.cdt<=0){u.cdt=def.cd;meadowStrike(u,foe);}
+    return;
+  }
+  if(def.guard){
+    const home=meadowStructurePos(u.side,'watch').x+dir*(24+(u.slot%3)*16);
+    const patrol=home+Math.sin(S.t*0.55+u.slot)*42;
+    if(Math.abs(patrol-u.x)>3){u.x+=Math.sign(patrol-u.x)*spd*0.42*dt;u.action='walk';}
+    else u.action='guard';
+    u.y0+=(Math.sin(S.t+u.slot)*6-u.y0)*dt*1.6;
+    return;
+  }
+  const rt=meadowRaidTarget(u);
+  if(!rt){u.action='hide';return;}
+  const targetY=rt.y-meadowLaneY();u.y0+=(targetY-u.y0)*dt*1.9;
+  if(Math.abs(u.x-rt.x)>28){u.x+=Math.sign(rt.x-u.x)*spd*dt;u.action='walk';}
+  else if(u.cdt<=0){
+    u.cdt=def.cd;u.action='work';u.actionT=0.34;
+    const old=u.dmg;u.dmg*=def.raidPower||1;attackWorkers(u,rt);u.dmg=old;
+    S.sides[u.side].meadow.raids++;
+  }
+}
+function meadowDefenseTick(dt){
+  for(const side of ['P','E']){
+    const s=S.sides[side],m=s.meadow;
+    if(m.watch<=0)continue;
+    m.watchCd-=dt;
+    if(m.watchCd>0)continue;
+    const pos=meadowStructurePos(side,'watch');
+    let foe=null,bd=1e9;
+    for(const u of S.units){
+      if(u.side===side||u.dying||u.front!=='meadow'||u.type!=='saboteur')continue;
+      const d=Math.abs(u.x-pos.x)+Math.abs(meadowLaneY()+u.y0-pos.y)*0.35;
+      if(d<bd){bd=d;foe=u;}
+    }
+    if(foe&&bd<MEADOW_STRUCTURES.watch.range){
+      m.watchCd=MEADOW_STRUCTURES.watch.cd/Math.max(1,m.watch);
+      S.arrows.push({x:pos.x,y:pos.y-30,sx:pos.x,tx:foe.x,ty:meadowLaneY()+foe.y0-12,t:0,dur:0.22,side,meadow:true});
+      damageUnit(foe,MEADOW_STRUCTURES.watch.dmg*m.watch);arrowSnd();
+    }
+  }
+}
+
 /* ---- Combate ---- */
 function combatTick(dt){
   const us=S.units;
+  // Particionamos una sola vez por tick: cada unidad sigue comprobando
+  // `dying` porque otra unidad puede haber muerto durante este mismo bucle.
+  const pAlive=[], eAlive=[];
+  for(const v of us){
+    if(v.dying)continue;
+    (v.side==='P'?pAlive:eAlive).push(v);
+  }
+  const pFormationCount=Math.max(1,pAlive.length);
   for(let i=0;i<us.length;i++){
     const u=us[i];
     if(u.dying){u.dieT-=dt;continue;}
     u.cdt-=dt; u.flash=Math.max(0,(u.flash||0)-dt);
+    u.actionT=Math.max(0,(u.actionT||0)-dt);
+    if(u.actionT<=0)u.action='idle';
     u.ph+=dt*(UNITS[u.type].mount?11:8);
     const def=UNITS[u.type];
     const spd=(u.spd||def.spd)*formSpdMul(u);
+    if(u.front==='meadow'){
+      meadowUnitTick(u,dt,pAlive,eAlive);
+      continue;
+    }
     // la formación marca la altura de marcha: se aproxima suavemente a su fila
     if(u.side==='P'){
-      const n=Math.max(1,armyCount('P'));
-      const ty=formTargetY(u,n);
+      const ty=formTargetY(u,pFormationCount);
       if(u.fy==null)u.fy=ty;
       u.fy=ty; // la Línea se reajusta en vivo con cada refuerzo
       const dy=ty-u.y0;
@@ -854,25 +1319,49 @@ function combatTick(dt){
     }
     const dir=u.side==='P'?1:-1;
     let foe=null,bd=1e9;
-    for(let j=0;j<us.length;j++){
-      const v=us[j];
-      if(v.side===u.side||v.dying)continue;
+    const rivals=u.side==='P'?eAlive:pAlive;
+    for(let j=0;j<rivals.length;j++){
+      const v=rivals[j];
+      if(v.dying)continue;
       const d=Math.abs(v.x-u.x)+Math.abs(v.y0-u.y0)*0.5;
       if(d<bd){bd=d;foe=v;}
     }
     const aggro=def.ranged?def.range+70:190;
     if(foe&&bd<aggro){
       const reach=def.ranged?def.range*0.92:def.range;
-      if(bd>reach){u.x+=dir*spd*dt;}
+      if(bd>reach){u.x+=dir*spd*dt;u.action='walk';}
       else if(u.cdt<=0){u.cdt=def.cd;attack(u,foe);}
     }else if(def.raid&&(u.rt=raidTarget(u))){
       // RAIDEO: la caballería se ceba con la economía (aldeanos) antes que con
       // la piedra; solo pelea si el enemigo la intercepta (rama anterior)
       const rt=u.rt;
       if(Math.abs(u.x-rt.x)<=30){if(u.cdt<=0){u.cdt=def.cd;attackWorkers(u,rt);}}
-      else u.x+=Math.sign(rt.x-u.x)*spd*dt;
+       else{u.x+=Math.sign(rt.x-u.x)*spd*dt;u.action='walk';}
     }else{
-      const tx=castleFrontX(u.side==='P'?'E':'P');
+      const T=u.side==='P'?'E':'P';
+      const tx=castleFrontX(T);
+      const wx=wallFrontX(T);
+      const wall=S.sides[T].def.wall;
+      const crossed=u.side==='P'?u.x>wx:u.x<wx;
+      // prioridad de objetivo: muralla intacta y sin cruzar → maravilla enemiga
+      // (si está levantada hay que derribarla o pierdes) → torre viva → castillo
+      let tgt=null;
+      if(wall.hp>0&&!crossed){
+        tgt={kind:'wall',x:wx};
+      }else{
+        const wd=S.sides[T].wonder;
+        if(wd.built&&wd.hp>0){
+          tgt={kind:'wonder',x:wonderPos(T).x};
+        }else{
+          let best=null,bd=1e9;
+          for(const tw of S.sides[T].def.towers){
+            if(tw.hp<=0)continue;
+            const d=Math.abs(tw.x-u.x)+Math.abs(tw.y-u.y0)*0.5;
+            if(d<bd){bd=d;best=tw;}
+          }
+          tgt={kind:best?'tower':'castle',x:best?best.x:tx,tw:best};
+        }
+      }
       // doctrina de marcha: la unidad SIEMPRE avanza hacia el castillo rival.
       // Junto a las murallas propias puede aguardar un instante a formar grupo
       // (sale en cuanto hay un compañero cerca), pero con plazo máximo: si no
@@ -880,19 +1369,28 @@ function combatTick(dt){
       let go=true;
       if(Math.abs(u.x-castleFrontX(u.side))<240){
         let allies=0;
-        for(let j=0;j<us.length;j++){
-          const v=us[j];
-          if(v.side===u.side&&!v.dying&&Math.abs(v.x-u.x)<120)allies++;
+        const alliesList=u.side==='P'?pAlive:eAlive;
+        for(let j=0;j<alliesList.length;j++){
+          const v=alliesList[j];
+          if(!v.dying&&Math.abs(v.x-u.x)<120)allies++;
         }
         u.rally=(u.rally||0)+dt;
         const refuerzos=S.sides[u.side].queue.length>0;
         go=allies>=2||u.rally>=(refuerzos?4.5:2.0);
       }else u.rally=0;
-      // a distancia de tiro ya se hostiga el castillo: el asedio bombardea desde
-      // su alcance (la bombarda 225 > 200 de las saetas: bate murallas con impunidad)
+      // a distancia de tiro ya se hostiga el objetivo (muralla/torre/castillo):
+      // el asedio bombardea desde su alcance (la bombarda 225 > 200 de las
+      // saetas: bate muros con impunidad)
       const stopD=def.ranged?def.range-12:26;
-      if(dir*(tx-u.x)<=stopD){if(u.cdt<=0){u.cdt=def.cd;attackCastle(u);}}
-      else if(go){u.x+=dir*spd*dt;}
+      if(dir*(tgt.x-u.x)<=stopD){
+        if(u.cdt<=0){u.cdt=def.cd;
+          if(tgt.kind==='wall')attackWall(u,T);
+          else if(tgt.kind==='tower')attackTower(u,tgt.tw,T);
+          else if(tgt.kind==='wonder')attackWonder(u,T);
+          else attackCastle(u);
+        }
+      }
+      else if(go){u.x+=dir*spd*dt;u.action='walk';}
     }
     // el castillo rival hace de muro: si la melé o el avance empujan a alguien
     // más allá de la puerta, vuelve a ella; ninguna tropa se pierde en el mapa
@@ -903,17 +1401,19 @@ function combatTick(dt){
   for(let i=0;i<us.length;i++){
     const a=us[i]; if(a.dying)continue;
     for(let j=i+1;j<us.length;j++){
-      const b=us[j]; if(b.dying||b.side!==a.side)continue;
+      const b=us[j]; if(b.dying||b.side!==a.side||b.front!==a.front)continue;
       const dx=b.x-a.x, dy=b.y0-a.y0, d2=dx*dx+dy*dy;
       if(d2<196&&d2>0.01){
         const d=Math.sqrt(d2), push=(14-d)*0.5, nx=dx/d, ny=dy/d;
-        a.x-=nx*push*0.5; a.y0=clamp(a.y0-ny*push*0.5,-20,20);
-        b.x+=nx*push*0.5; b.y0=clamp(b.y0+ny*push*0.5,-20,20);
+        const minY=a.front==='meadow'?-18:-20,maxY=a.front==='meadow'?H*.13:20;
+        a.x-=nx*push*0.5; a.y0=clamp(a.y0-ny*push*0.5,minY,maxY);
+        b.x+=nx*push*0.5; b.y0=clamp(b.y0+ny*push*0.5,minY,maxY);
       }
     }
   }
   S.units=us.filter(u=>!(u.dying&&u.dieT<=0));
   castleDefenseTick(dt);
+  meadowDefenseTick(dt);
 }
 /* Las murallas se defienden: saetas desde el castillo contra el sitiador más cercano */
 function castleDefenseTick(dt){
@@ -925,7 +1425,7 @@ function castleDefenseTick(dt){
     const fx=castleFrontX(side);
     let foe=null,bd=1e9;
     for(const u of S.units){
-      if(u.side===side||u.dying)continue;
+      if(u.side===side||u.dying||u.front==='meadow')continue;
       const d=Math.abs(u.x-fx)+Math.abs(u.y0)*0.5;
       if(d<bd){bd=d;foe=u;}
     }
@@ -936,6 +1436,30 @@ function castleDefenseTick(dt){
       const def=UNITS[foe.type];
       const siegeMul=def&&def.siege?2:1;
       damageUnit(foe,Math.round(CASTLE_DEF_DMG*(1+c.age*0.25)*siegeMul));
+    }
+  }
+  towerDefenseTick(dt);
+}
+/* Las torres de vigilancia acribillan a los sitiadores dentro de su alcance */
+function towerDefenseTick(dt){
+  for(const side of ['P','E']){
+    const c=S.sides[side];
+    for(const tw of c.def.towers){
+      if(tw.hp<=0)continue;
+      tw.cd=(tw.cd||0)-dt;
+      if(tw.cd>0)continue;
+      let foe=null,bd=1e9;
+      for(const u of S.units){
+        if(u.side===side||u.dying||u.front==='meadow')continue;
+        const d=Math.abs(u.x-tw.x)+Math.abs(u.y0)*0.5;
+        if(d<bd){bd=d;foe=u;}
+      }
+      if(foe&&bd<DEFENSE.tower.range){
+        tw.cd=DEFENSE.tower.cd;
+        S.arrows.push({x:tw.x,y:tw.y-16,sx:tw.x,tx:foe.x,ty:laneY()+foe.y0-12,t:0,dur:0.24,side});
+        arrowSnd();
+        damageUnit(foe,DEFENSE.tower.dmg);
+      }
     }
   }
 }
@@ -955,7 +1479,7 @@ function attack(u,foe){
   const mult=bonusMult(def,foe.type);
   // moral de muralla: quien pelea junto a su castillo golpea con más brío
   const home=Math.abs(u.x-castleFrontX(u.side))<240?1.25:1;
-  u.flash=0.22;
+  u.flash=0.22;u.action='attack';u.actionT=0.24;
   const shots=def.volley||1;
   const atkMul=1+UPG.atk.step*S.sides[u.side].upg.atk;
   const dmg=Math.max(1,Math.round(u.dmg*mult*home*atkMul*formAtkMul(u)*(shots>1?0.55:1)));
@@ -982,6 +1506,11 @@ function attack(u,foe){
     S.shake=Math.max(S.shake,3.2);
   }
 }
+function launchTorch(u,x,y){
+  u.action='torch';u.actionT=0.36;u.flash=0.24;
+  S.torches.push({x:u.x,y:laneY()+u.y0-24,sx:u.x,tx:x,ty:y,t:0,dur:0.38,side:u.side,lit:false});
+  hitSnd(0.05);
+}
 function attackCastle(u){
   const def=UNITS[u.type];
   const target=u.side==='P'?'E':'P';
@@ -990,10 +1519,10 @@ function attackCastle(u){
   const dmg=Math.round(u.dmg*atkMul*(def.castleBonus||1)*formAtkMul(u));
   c.castleHp=Math.max(0,c.castleHp-dmg);
   const fx=castleFrontX(target), y=laneY()-rr(10,70);
-  if(def.ranged){
+  if(def.siege){
     S.arrows.push({x:u.x,y:laneY()+u.y0-24,sx:u.x,tx:fx,ty:y,t:0,dur:0.4,side:u.side,rock:def.siege});
-    if(def.siege)boomSnd();else arrowSnd();
-  }else hitSnd(0.05);
+    boomSnd();
+  }else launchTorch(u,fx,y);
   if(target==='P')Snd.castleHit();
   S.nums.push({x:fx+rr(-8,8),y,t:0.8,v:dmg,castle:true});
   dust(fx,y);
@@ -1007,6 +1536,64 @@ function attackCastle(u){
     if(target==='P')heraldSay(def.castleBonus?'¡Bombardas contra nuestro castillo! ¡Los muros se agrietan!':'¡Nuestro castillo está siendo asaltado!','warn');
   }
   if(c.castleHp<=0&&!S.over){S.over=true;S.winner=u.side;S.overT=0;}
+}
+function attackWall(u,T){
+  const def=UNITS[u.type];
+  const c=S.sides[T];
+  const atkMul=1+UPG.atk.step*S.sides[u.side].upg.atk;
+  const dmg=Math.round(u.dmg*atkMul*(def.castleBonus||1)*formAtkMul(u));
+  const wx=wallFrontX(T);
+  if(def.siege){
+    S.arrows.push({x:u.x,y:laneY()+u.y0-24,sx:u.x,tx:wx,ty:laneY()-rr(4,40),t:0,dur:0.4,side:u.side,rock:def.siege});
+    boomSnd();
+  }else launchTorch(u,wx,laneY()-26);
+  S.nums.push({x:wx+rr(-12,12),y:laneY()-rr(20,46),t:0.8,v:dmg,castle:true});
+  dust(wx,laneY()-rr(20,46));
+  c.def.wall.hp=Math.max(0,c.def.wall.hp-dmg);
+  if(def.castleBonus){flameBurst(wx,laneY()-26);S.shake=Math.max(S.shake,4);}
+  else S.shake=Math.max(S.shake,1.8);
+  if(c.def.wall.hp<=0){
+    heraldSay(T==='P'?'¡Han derribado nuestra muralla! ¡Defended la puerta!':'Nuestra artillería abre una brecha en la muralla de Vermell.','warn');
+    c.def.wall.hp=0;
+  }
+}
+function attackTower(u,tw,T){
+  const def=UNITS[u.type];
+  const atkMul=1+UPG.atk.step*S.sides[u.side].upg.atk;
+  const dmg=Math.round(u.dmg*atkMul*(def.castleBonus||1)*formAtkMul(u));
+  if(def.siege){
+    S.arrows.push({x:u.x,y:laneY()+u.y0-24,sx:u.x,tx:tw.x,ty:tw.y-18,t:0,dur:0.4,side:u.side,rock:def.siege});
+    boomSnd();
+  }else launchTorch(u,tw.x,tw.y-18);
+  S.nums.push({x:tw.x+rr(-8,8),y:tw.y-22,t:0.8,v:dmg,castle:true});
+  dust(tw.x,tw.y-16);
+  tw.hp=Math.max(0,tw.hp-dmg);
+  if(def.castleBonus){flameBurst(tw.x,tw.y-16);S.shake=Math.max(S.shake,3);}
+  else S.shake=Math.max(S.shake,1.5);
+  if(tw.hp<=0){dust(tw.x,tw.y-10);S.shake=Math.max(S.shake,5);}
+}
+function attackWonder(u,T){
+  const def=UNITS[u.type];
+  const w=S.sides[T].wonder;
+  const atkMul=1+UPG.atk.step*S.sides[u.side].upg.atk;
+  const dmg=Math.round(u.dmg*atkMul*(def.castleBonus||1)*formAtkMul(u));
+  const wx=wonderPos(T).x, y=laneY()-rr(30,80);
+  if(def.siege){
+    S.arrows.push({x:u.x,y:laneY()+u.y0-24,sx:u.x,tx:wx,ty:y,t:0,dur:0.4,side:u.side,rock:def.siege});
+    boomSnd();
+  }else launchTorch(u,wx,y);
+  S.nums.push({x:wx+rr(-10,10),y,t:0.8,v:dmg,castle:true});
+  dust(wx,y);
+  w.hp=Math.max(0,w.hp-dmg);
+  if(def.castleBonus){flameBurst(wx,y);S.shake=Math.max(S.shake,4);}
+  else S.shake=Math.max(S.shake,2.2);
+  if(w.hp<=0){
+    w.built=false;w.hp=0;w.t=0;
+    dust(wx,laneY());S.shake=Math.max(S.shake,6);
+    S.rings.push({x:wx,y:laneY(),t:0.6,big:42});
+    if(T==='P')heraldSay('¡Han derribado nuestra maravilla! ¡Hay que reconstruirla!','warn');
+    else heraldSay('Su maravilla se derrumba. La victoria por maravilla se ha cancelado.','ok');
+  }
 }
 /* ---- Raideo de economía ---- */
 function raidTarget(u){
@@ -1022,7 +1609,7 @@ function raidTarget(u){
 function attackWorkers(u,rt){
   const s=S.sides[rt.side], w=s.workers[rt.k];
   if(w.alive<=0)return;
-  u.flash=0.22;
+  u.flash=0.22;u.action=u.front==='meadow'?'work':'attack';u.actionT=0.3;
   hitSnd();
   const np=nodePos(rt.k,rt.side), ty=np.y+rr(0,10);
   spark(u.x,ty-6);
@@ -1065,11 +1652,12 @@ function damageUnit(v,dmg,bonus,isSplash){
   if(isSplash)fm*=formSplashMul(v);
   dmg=Math.max(1,Math.round(dmg*defMul*fm));
   v.hp-=dmg;
-  S.nums.push({x:v.x+rr(-6,6),y:laneY()+v.y0-26,t:0.8,v:dmg,crit:dmg>=16,bonus:!!bonus});
+  const vy=(v.front==='meadow'?meadowLaneY():laneY())+v.y0;
+  S.nums.push({x:v.x+rr(-6,6),y:vy-26,t:0.8,v:dmg,crit:dmg>=16,bonus:!!bonus});
   if(v.hp<=0){
     v.dying=true; v.dieT=0.6; v.hp=0;
     S.sides[v.side].stats.lost++;
-    dust(v.x,laneY()+v.y0);
+    dust(v.x,vy);
     deathSnd();
   }
 }
@@ -1081,6 +1669,11 @@ function arrowsTick(dt){
     if(a.t>=1)spark(a.tx,a.ty,2);
   }
   S.arrows=S.arrows.filter(a=>a.t<1);
+  for(const t of S.torches){
+    t.t+=dt/t.dur;
+    if(t.t>=1&&!t.lit){t.lit=true;flameBurst(t.tx,t.ty);S.shake=Math.max(S.shake,1.8);}
+  }
+  S.torches=S.torches.filter(t=>t.t<1);
 }
 function fxTick(dt){
   for(const p of S.parts){p.t-=dt;p.x+=p.vx*dt;p.y+=p.vy*dt;p.vy+=(p.g||0)*dt;if(p.vr)p.rot+=p.vr*dt;}
@@ -1103,6 +1696,23 @@ function fxTick(dt){
         t:rr(1.2,2.2),life:2.2,r:rr(5,10),g:-6,kind:'smoke'});
     }
   }
+  // countdown de la maravilla: si sigue en pie al terminar la cuenta, victoria
+  for(const side of ['P','E']){
+    const w=S.sides[side].wonder;
+    if(w.built&&w.hp>0){
+      w.t+=dt;
+      if(Math.floor(w.t)!=Math.floor(w.t-dt)){
+        const left=WONDER.time-Math.floor(w.t);
+        if(left<=5&&left>0)heraldSay((left===1?'¡LA MARAVILLA DARA LA VICTORIA EN UN SEGUNDO!':'Maravilla de '+side+' en pie: ¡faltan '+left+' segundos!'),'warn');
+      }
+      if(w.t>=WONDER.time&&!S.over){
+        S.over=true;S.winner=side;S.overT=0;
+        heraldSay(side==='P'?'¡La Maravilla se erige triunfante! ¡VICTORIA POR MARAVILLA!':'La Maravilla de Vermell triunfa. ¡DERROTA POR MARAVILLA!','warn');
+        S.rings.push({x:wonderPos(side).x,y:laneY(),t:1.2,big:80});
+        S.shake=Math.max(S.shake,8);
+      }
+    }
+  }
   if(S.shake>0)S.shake=Math.max(0,S.shake-dt*7);
   if(S.over){
     S.overT+=dt;
@@ -1120,7 +1730,7 @@ function dust(x,y){
 /* ---- IA rival: economía propia + counter a tu composición + raideo ---- */
 function aiTick(dt){
   if(S.aiAlarm>0)S.aiAlarm-=dt;
-  S.aiThinkT-=dt; S.aiTrainT-=dt; S.aiEngT-=dt;
+  S.aiThinkT-=dt; S.aiTrainT-=dt; S.aiEngT-=dt; S.aiDefT-=dt;
   if(S.aiThinkT>0)return;
   S.aiThinkT=0.7;
   const e=S.sides.E;
@@ -1140,7 +1750,9 @@ function aiTick(dt){
   }
   // 2) economía: refuerza el motor más atrasado, con cadencia y sin pisar la reserva
   if(S.aiEngT<=0&&!urgent){
-    const w={farm:1.0,wood:0.85,mine:0.95};
+    const w={farm:1.0,wood:0.85,mine:0.95,quarry:0.7};
+    // si la IA quiere fortificar pero no tiene cantera, la levanta cuanto antes
+    if(e.age>=1&&e.eng.quarry===0&&e.res.stone<140)w.quarry=0.35;
     let best=null,bs=1e9;
     for(const k in ENGINES){
       if(e.eng[k]>=ENG_CAP)continue;
@@ -1150,7 +1762,34 @@ function aiTick(dt){
     if(best){
       const c=engCost(best,e.eng[best]);
       const cr=ENGINES[best].costRes;
-      if(e.res[cr]>c+reserve[cr]+80){e.res[cr]-=c;addEngine('E',best);S.aiEngT=2.2;}
+      // la cantera se levanta con menos margen: sin ella la IA jamás fortifica
+      const margin=(best==='quarry'&&e.eng.quarry===0)?20:80;
+      if(e.res[cr]>c+reserve[cr]+margin){e.res[cr]-=c;addEngine('E',best);S.aiEngT=2.2;}
+    }
+  }
+  // 2b) defensa: la IA también levanta muralla y torres para no regalar el asalto
+  if(S.aiDefT<=0){
+    S.aiDefT=4;
+    const wantWall=e.def.wall.lvl<DEFENSE.wall.max&&e.age>=1;
+    const wantTower=e.def.towers.length<DEFENSE.tower.max&&e.age>=2;
+    if(wantWall&&e.res.stone>DEFENSE.wall.cost.stone+(reserve.stone||0)+40&&e.res.wood>DEFENSE.wall.cost.wood+(reserve.wood||0)+30){
+      pay('E',DEFENSE.wall.cost);
+      if(e.def.wall.lvl===0){e.def.wall.lvl=1;e.def.wall.hp=wallMaxHp('E',1);}
+      else{e.def.wall.lvl++;e.def.wall.hp=wallMaxHp('E',e.def.wall.lvl);}
+      S.aiDefT=12;
+    }
+    if(wantTower&&e.res.stone>DEFENSE.tower.cost.stone+(reserve.stone||0)+40&&e.res.wood>DEFENSE.tower.cost.wood+(reserve.wood||0)+30&&e.res.gold>DEFENSE.tower.cost.gold+(reserve.gold||0)+20){
+      pay('E',DEFENSE.tower.cost);
+      const i=e.def.towers.length,p=towerPos('E',i);
+      e.def.towers.push({hp:towerMaxHp('E'),max:towerMaxHp('E'),x:p.x,y:p.y,cd:0});
+      S.aiDefT=14;
+    }else if(e.def.wall.lvl>0&&e.def.wall.hp<DEFENSE.wall.hp[e.def.wall.lvl]*0.7){
+      // muralla dañada: reparar antes de ampliar
+      if(e.res.stone>WALL_REPAIR.stone+(reserve.stone||0)+30&&e.res.wood>WALL_REPAIR.wood+(reserve.wood||0)+20){
+        pay('E',WALL_REPAIR);
+        e.def.wall.hp=Math.min(wallMaxHp('E',e.def.wall.lvl),e.def.wall.hp+wallMaxHp('E',1)*0.3);
+        S.aiDefT=6;
+      }
     }
   }
   // 3) plan de counter según tus últimas tropas (tabla fiel a AoE4, adaptada a su civ)
@@ -1165,7 +1804,7 @@ function aiTick(dt){
     S.aiPlan=e.age>=1&&Math.random()<0.35?civUnitFor(e.civ,'scout'):civUnitFor(e.civ,'lancer');
   }else{
     S.aiPlan=top?civUnitFor(e.civ,COUNTER_OF[top]):roster[Math.random()*Math.min(4,roster.length)|0];
-    const pEng=S.sides.P.eng.farm+S.sides.P.eng.wood+S.sides.P.eng.mine;
+    const pEng=S.sides.P.eng.farm+S.sides.P.eng.wood+S.sides.P.eng.mine+S.sides.P.eng.quarry;
     // si el jugador se dedica a la economía, jinetes a su gaznate
     if(pEng>=4&&armyCount('P')<=3&&Math.random()<0.5&&e.age>=1)S.aiPlan=civUnitFor(e.civ,'scout');
     // mezcla de asedio en edades altas
@@ -1182,6 +1821,22 @@ function aiTick(dt){
     const first = S.aiAlarm>0 ? 'def' : 'atk';
     const second = first==='atk' ? 'def' : 'atk';
     aiTryUpg(first, reserve) || aiTryUpg(second, reserve);
+  }
+  // 4c) tecnología única: la IA la investiga en cuanto puede permitírsela
+  if(e.civ&&!e.tech&&e.age>=CIV_TECH[e.civ].age){
+    const t=CIV_TECH[e.civ];
+    let ok=true;
+    for(const r in t.cost)if(e.res[r]<t.cost[r]+(reserve[r]||0)+40){ok=false;break;}
+    if(ok)buyCivTech('E');
+  }
+  // 4d) maravilla: en Imperial, con economía saneada y el asalto contenido, la IA
+  //     arriesga la victoria alternativa (coste muy alto, deja el ejército a medias)
+  if(!e.wonder.built&&e.age>=WONDER.age&&S.t>AI_MIN_AGE_T[3]*D.ageMul*2.2){
+    const c=WONDER.cost;
+    let ok=true;
+    for(const r in c)if(e.res[r]<c[r]*1.25){ok=false;break;}
+    const military=armyCount('E');
+    if(ok&&military>=6&&(e.def.wall.lvl>0||military>=10))buildWonder('E');
   }
   // 4) entrenar sin vaciar la reserva de la edad y con plantillas por edad (como un humano:
   //    no infinita carne de cañón; consolida un ejército y presiona con él)
@@ -1204,6 +1859,28 @@ function aiTick(dt){
       if(ok){trainSide('E',t);done=true;break;}
     }
     S.aiTrainT=AI_TRAIN_INT[e.age]*D.trainMul*rr(0.85,1.15)*(done?1:0.5);
+  }
+  meadowAiThink(reserve);
+}
+
+function meadowAiThink(reserve){
+  S.aiMeadowT-=0.7;
+  if(S.aiMeadowT>0)return;
+  const e=S.sides.E,D=DIFF[difficulty],saved=reserve||{};
+  S.aiMeadowT=clamp(10*D.trainMul,4.5,15);
+  const spare=cost=>Object.keys(cost).every(k=>e.res[k]>=cost[k]+(saved[k]||0)+20);
+  if(e.age>=1&&e.meadow.store<1&&spare(MEADOW_STRUCTURES.store.cost)){buildMeadowStructure('E','store');return;}
+  if(e.age>=1&&e.meadow.watch<1&&spare(MEADOW_STRUCTURES.watch.cost)){buildMeadowStructure('E','watch');return;}
+  if(e.age>=2&&e.meadow.camp<1&&spare(MEADOW_STRUCTURES.camp.cost)){buildMeadowStructure('E','camp');return;}
+  const threat=meadowCount('P','saboteur');
+  if(e.meadow.watch>0&&threat>meadowCommittedCount('E','warden')&&spare(unitCost('E','warden'))&&canDeployMeadow('E','warden')){
+    deployMeadow('E','warden','farm');return;
+  }
+  const raidCap=Math.max(1,Math.round(1+D.armyMul));
+  if(e.meadow.camp>0&&meadowCommittedCount('E','saboteur')<raidCap&&spare(unitCost('E','saboteur'))&&canDeployMeadow('E','saboteur')){
+    const p=S.sides.P;
+    const target=MEADOW_TARGETS.slice().sort((a,b)=>(p.eng[b]*(p.workers[b].alive+1))-(p.eng[a]*(p.workers[a].alive+1)))[0];
+    e.meadow.target=target;deployMeadow('E','saboteur',target);
   }
 }
 
@@ -1230,7 +1907,7 @@ const Snd={
     }
     if(this.ctx.state==='suspended')this.ctx.resume();
   },
-  setVolume(v){this.vol=clamp(v,0,1);if(this.master)this.master.gain.value=this.vol;if(typeof Mus!=='undefined')Mus.vol();},
+  setVolume(v){this.vol=clamp(v,0,1);if(this.master)this.master.gain.value=this.vol;if(typeof Mus!=='undefined')Mus.vol();savePreferences();},
   getVolume(){return this.vol;},
   tone(o){
     if(muted)return;
@@ -1432,22 +2109,75 @@ function denyPulse(node){
   if(!node)return;
   node.classList.remove('deny');void node.offsetWidth;node.classList.add('deny');
 }
+function buildDefense(k){
+  if(S.over)return;
+  const s=S.sides.P, def=DEFENSE[k];
+  if(k==='wall'){
+    if(s.def.wall.lvl>=def.max){
+      if(s.def.wall.hp<def.hp[s.def.wall.lvl]){repairWall();return;}
+      denyPulse(el.defBtn.wall);return;
+    }
+    const lvl=s.def.wall.lvl, cost=def.cost;
+    if(!canAfford('P',cost)){denyRes(cost);Snd.thud();return;}
+    pay('P',cost);
+    if(lvl===0){s.def.wall.lvl=1;s.def.wall.hp=wallMaxHp('P',1);heraldSay('Muralla levantada: la puerta queda a salvo del primer asalto.','');}
+    else{s.def.wall.lvl++;s.def.wall.hp=wallMaxHp('P',s.def.wall.lvl);heraldSay('Muralla reforzada: el adarve aguanta más embestidas.','');}
+    Snd.build();
+  }else{ // torre
+    if(s.def.towers.length>=def.max){denyPulse(el.defBtn.tower);return;}
+    const cost=def.cost;
+    if(!canAfford('P',cost)){denyRes(cost);Snd.thud();return;}
+    pay('P',cost);
+    const i=s.def.towers.length, p=towerPos('P',i);
+    s.def.towers.push({hp:towerMaxHp('P'),max:towerMaxHp('P'),x:p.x,y:p.y,cd:0});
+    heraldSay('Torre de vigilancia en pie: los saeteros cubren el acceso al castillo.','');
+    Snd.build();
+  }
+}
+function repairWall(){
+  const s=S.sides.P, def=DEFENSE.wall;
+  if(s.def.wall.lvl<1||s.def.wall.hp>=wallMaxHp('P',s.def.wall.lvl))return;
+  const cost=WALL_REPAIR;
+  if(!canAfford('P',cost)){denyRes(cost);Snd.thud();return;}
+  pay('P',cost);
+  s.def.wall.hp=Math.min(wallMaxHp('P',s.def.wall.lvl),s.def.wall.hp+wallMaxHp('P',1)*0.3);
+  Snd.build();
+  S.nums.push({x:wallFrontX('P'),y:laneY()-40,t:0.9,v:'+'+Math.round(wallMaxHp('P',1)*0.3),heal:true});
+}
 function denyRes(cost){
   for(const k in cost){
     const box=el.resBox[k];
     if(box){box.classList.remove('deny');void box.offsetWidth;box.classList.add('deny');}
   }
 }
+function buildWonder(side){
+  const s=S.sides[side];
+  if(s.wonder.built)return false;
+  if(s.age<WONDER.age)return false;
+  const cost=WONDER.cost;
+  if(!canAfford(side,cost)){if(side==='P')denyRes(cost);Snd.thud();return false;}
+  pay(side,cost);
+  s.wonder.built=true;s.wonder.hp=WONDER.hp;s.wonder.max=WONDER.hp;s.wonder.t=0;
+  heraldSay(side==='P'?'¡Se levanta la Maravilla! Mantenedla en pie '+WONDER.time+' segundos y la victoria será vuestra.':'La Maravilla de Vermell se alza en el valle. ¡Debéis derribarla a tiempo!','warn');
+  Snd.build();
+  return true;
+}
+function playerBuildWonder(){buildWonder('P');}
 
 /* ---- Final de partida ---- */
 function overShown(v){
+  if(v)rememberDialogFocus(el.overlay);
   el.overlay.classList.toggle('show',v);
   el.overlay.classList.remove('win','lose');
+  el.overlay.setAttribute('aria-hidden',String(!v));
+  if(!v)restoreDialogFocus(el.overlay);
 }
 function showOver(){
+  manualPaused=false;syncPauseUI();
   Mus.stop();
   const P=S.sides.P,E=S.sides.E,win=S.winner==='P';
   el.overlay.classList.add('show',win?'win':'lose');
+  el.overlay.setAttribute('aria-hidden','false');
   el.overTitle.textContent=win?'VICTORIA':'DERROTA';
   el.overSub.textContent=win
     ?'El castillo de Vermell se derrumba. El valle es vuestro, mi señor.'
@@ -1461,11 +2191,12 @@ function showOver(){
   el.sCastleE.textContent=Math.floor(E.castleHp)+'/'+Math.floor(castleMaxHp('E'));
   el.sUpgP.textContent=P.upg.atk+'/'+P.upg.def;
   el.sUpgE.textContent=E.upg.atk+'/'+E.upg.def;
-  el.sEngP.textContent=P.eng.farm+P.eng.wood+P.eng.mine;
-  el.sEngE.textContent=E.eng.farm+E.eng.wood+E.eng.mine;
+  el.sEngP.textContent=P.eng.farm+P.eng.wood+P.eng.mine+P.eng.quarry;
+  el.sEngE.textContent=E.eng.farm+E.eng.wood+E.eng.mine+E.eng.quarry;
   el.sTime.textContent=fmtT(S.t);
   el.sDiff.textContent=DIFF[difficulty].name;
   if(win)Snd.win();else Snd.lose();
+  focusDialog(el.overlay,document.getElementById('btn-restart'));
 }
 function restart(){
   Mus.stop();
@@ -1474,8 +2205,11 @@ function restart(){
 }
 function backToCivPick(){
   Mus.stop();
+  manualPaused=false;syncPauseUI();
   overShown(false);
-  el.civpick.classList.add('show');
+  el.civpick.classList.add('show');el.civpick.setAttribute('aria-hidden','false');
+  rememberDialogFocus(el.civpick);
+  focusDialog(el.civpick,el.civGrid.querySelector('.civ-card'));
   Snd.click();
 }
 
@@ -1490,6 +2224,7 @@ globalThis.GAME={
   },
   buyEngine, ageUp:playerAgeUp, buyUpg:k=>playerBuyUpg(k), restart,
   setSpeed:v=>setSpeed(v), cycleSpeed:dir=>cycleSpeed(dir), getSpeed:()=>gameSpeed,
+  isPaused:()=>manualPaused,
   setForm:n=>{S.form=clamp(n|0,0,FORMATIONS.length-1);syncForm();},
   getForm:()=>S.form,
   cycleForm:dir=>cycleForm(dir),
@@ -1504,12 +2239,14 @@ globalThis.GAME={
     damageUnit(victim,raw,false,!!isSplash);
     return before-victim.hp;
   },
-  setDifficulty:n=>{difficulty=clamp(n|0,0,3);},
+  setDifficulty:n=>{setDiff(n);},
   getDifficulty:()=>difficulty,
   setVolume:v=>Snd.setVolume(v), getVolume:()=>Snd.getVolume(),
-  _geo:()=>({W,H,horizon:horizonY(),lane:laneY(),cW:castleW(),cH:castleH(),
+    _geo:()=>({W,H,horizon:horizonY(),lane:laneY(),cW:castleW(),cH:castleH(),
     baseY:castleBaseY(),frontP:castleFrontX('P'),frontE:castleFrontX('E'),
-    nodeFarmP:nodePos('farm','P'),nodeWoodP:nodePos('wood','P'),nodeMineP:nodePos('mine','P')}),
+    nodeFarmP:nodePos('farm','P'),nodeWoodP:nodePos('wood','P'),nodeMineP:nodePos('mine','P'),
+    nodeQuarryP:nodePos('quarry','P'),wallP:wallFrontX('P'),wallE:wallFrontX('E'),
+    wonderP:wonderPos('P').x,wonderE:wonderPos('E').x}),
   /* ganchos de prueba (no usados por el juego) */
   _spawn(side,type,x){
     const s=S.sides[side], def=UNITS[type];
@@ -1524,6 +2261,9 @@ globalThis.GAME={
     if(u&&x!=null)u.x=x;
     return u||null;
   },
+  _attackCastle:u=>attackCastle(u),
+  _projectiles:()=>({torches:S.torches.length,arrows:S.arrows.length,torchStates:S.torches.map(t=>({side:t.side,t:t.t,lit:t.lit}))}),
+  _unitStates:()=>S.units.map(u=>({side:u.side,type:u.type,front:u.front,x:u.x,y0:u.y0,action:u.action,actionT:u.actionT,dying:u.dying,target:u.meadowTarget})),
   _grant:(side,res,v)=>{S.sides[side].res[res]+=v;},
   _setAge:(side,age)=>{S.sides[side].age=age;},
   _eng(side,k,n){const s=S.sides[side];while(s.eng[k]<n)addEngine(side,k);},
@@ -1531,13 +2271,40 @@ globalThis.GAME={
   _income:(side,res)=>incomeOf(side,res),
   _herald:()=>S.herald.map(h=>h.text),
   _over:()=>({over:S.over,winner:S.winner}),
-  _startMatch:(p,e)=>newGame(p,e),
+  _startMatch:(p,e)=>{el.civpick.classList.remove('show');el.civpick.setAttribute('aria-hidden','true');newGame(p,e);},
   _buyUpg:(side,k)=>buyUpg(side,k),
   _upg:(side,k)=>S.sides[side].upg[k],
+  _tech:side=>({done:S.sides[side].tech, id:S.sides[side].civ,
+    info:S.sides[side].civ?CIV_TECH[S.sides[side].civ]:null}),
+  _buyTech:(side)=>buyCivTech(side),
+  _def:side=>({wall:{lvl:S.sides[side].def.wall.lvl,hp:S.sides[side].def.wall.hp},
+    towers:S.sides[side].def.towers.map(t=>({hp:t.hp,max:t.max,x:t.x,y:t.y}))}),
+  _buildDef:(side,k)=>{ // levanta para un bando dado (para pruebas/IA simétrica)
+    const s=S.sides[side],def=DEFENSE[k];
+    if(k==='wall'){
+      if(s.def.wall.lvl>=def.max)return false;
+      if(!canAfford(side,def.cost))return false;
+      pay(side,def.cost);
+      s.def.wall.lvl++;s.def.wall.hp=wallMaxHp(side,s.def.wall.lvl);
+      return true;
+    }
+    if(s.def.towers.length>=def.max)return false;
+    if(!canAfford(side,def.cost))return false;
+    pay(side,def.cost);
+    const i=s.def.towers.length,p=towerPos(side,i);
+    s.def.towers.push({hp:towerMaxHp(side),max:towerMaxHp(side),x:p.x,y:p.y,cd:0});
+    return true;
+  },
+  _wonder:side=>({built:S.sides[side].wonder.built,hp:S.sides[side].wonder.hp,max:S.sides[side].wonder.max,t:S.sides[side].wonder.t}),
+  _buildWonder:(side)=>buildWonder(side),
+  _buildMeadow:(side,k)=>buildMeadowStructure(side,k),
+  _deployMeadow:(side,type,target)=>deployMeadow(side,type,target),
+  _setMeadowTarget:k=>setMeadowTarget(k,false),
+  _meadow:side=>JSON.parse(JSON.stringify(S.sides[side].meadow)),
   _civ:side=>S.sides[side].civ,
   _roster:civ=>rosterFor(civ),
   _unitCost:(side,t)=>unitCost(side,t),
-  constData:()=>({AGES,UNITS,COUNTER_OF,CIVS,UNIT_ORDER,DIFF,ENGINES,UPG,
+  constData:()=>({AGES,UNITS,COUNTER_OF,CIVS,CIV_TECH,UNIT_ORDER,DIFF,ENGINES,UPG,DEFENSE,WONDER,MEADOW_STRUCTURES,MEADOW_TARGETS,
     engCost:(k,lvl)=>engCost(k,lvl), counterKey, civUnitFor}),
   probe(){
     const P=S.sides.P,E=S.sides.E;
@@ -1546,23 +2313,97 @@ globalThis.GAME={
       pLost:P.stats.lost,eLost:E.stats.lost,
       pCastle:P.castleHp,eCastle:E.castleHp,
       pGathered:P.stats.gathered,eGathered:E.stats.gathered,
-      resSum:P.res.food+P.res.wood+P.res.gold,
-      pAge:P.age,eAge:E.age,engSum:P.eng.farm+P.eng.wood+P.eng.mine,
+      resSum:P.res.food+P.res.wood+P.res.gold+P.res.stone,
+      pAge:P.age,eAge:E.age,engSum:P.eng.farm+P.eng.wood+P.eng.mine+P.eng.quarry,
+      pWall:P.def.wall.hp,pWallLvl:P.def.wall.lvl,pTowers:P.def.towers.filter(t=>t.hp>0).length,
+      eWall:E.def.wall.hp,eWallLvl:E.def.wall.lvl,eTowers:E.def.towers.filter(t=>t.hp>0).length,
+      pTech:P.tech,eTech:E.tech,
+      pMeadowUnits:meadowCount('P'),eMeadowUnits:meadowCount('E'),pRaids:P.meadow.raids,eRaids:E.meadow.raids,
+      pStore:P.meadow.store,pWatch:P.meadow.watch,pCamp:P.meadow.camp,
+      eStore:E.meadow.store,eWatch:E.meadow.watch,eCamp:E.meadow.camp,
+      pWonder:P.wonder.built?P.wonder.hp:0,eWonder:E.wonder.built?E.wonder.hp:0,
+      pWonderT:P.wonder.t,eWonderT:E.wonder.t,
       castleMax:castleMaxHp('P'),castleMaxE:castleMaxHp('E')};
   }
 };
 
 
 /* ================= RENDER, UI, ENTRADA Y BUCLE ================= */
-const ctx=document.getElementById('cv').getContext('2d');
+const mainCtx=document.getElementById('cv').getContext('2d');
+// `ctx` permanece apuntando al lienzo activo para que las rutinas de dibujo
+// puedan reutilizarse tanto en el lienzo visible como en las capas internas.
+let ctx=mainCtx;
+let terrainLayer=null, terrainLayerCtx=null, detailLayer=null, detailLayerCtx=null;
+let renderDpr=1, terrainDirty=true, detailDirty=true, detailSig='', detailStamp=-Infinity;
+function spriteImage(src){
+  const img=document.createElement('img');img.src=src;
+  if(img.addEventListener)img.addEventListener('load',()=>{terrainDirty=true;detailDirty=true;});
+  return img;
+}
+const PIXEL_ASSETS={
+  units:spriteImage('assets/pixel-units-atlas-v1.png'),
+  buildings:spriteImage('assets/pixel-buildings-atlas-v1.png'),
+  meadow:spriteImage('assets/pixel-meadow-atlas-v1.png'),
+  world:spriteImage('assets/pixel-valley-background-v1.png')
+};
+const UNIT_SPRITE={lancer:0,archer:1,longbow:1,scout:2,knight:3,crossbow:4,handcan:5,elite:6,mangonel:7,bombard:8,
+  saboteur:10,warden:11,royal:13,mangudai:14,horsearcher:14,landsknecht:15,zhugenu:16,janissary:17,warelephant:18};
+const BUILDING_SPRITE={farm:0,wood:1,mine:2,quarry:3,store:5,watch:9,camp:8,wall:10,tower:11,castleP:12,castleE:13,wonder:14,ruin:15};
+function spriteReady(img){return !!(img&&img.complete&&img.naturalWidth&&img.naturalHeight&&typeof ctx.drawImage==='function');}
+function drawAtlas(img,index,cols,rows,x,y,w,h,flip){
+  if(!spriteReady(img))return false;
+  const sw=img.naturalWidth/cols,sh=img.naturalHeight/rows,sx=(index%cols)*sw,sy=Math.floor(index/cols)*sh;
+  ctx.save();ctx.imageSmoothingEnabled=false;
+  if(flip){ctx.translate(x+w,y);ctx.scale(-1,1);ctx.drawImage(img,sx,sy,sw,sh,0,0,w,h);}
+  else ctx.drawImage(img,sx,sy,sw,sh,x,y,w,h);
+  ctx.restore();return true;
+}
+function cssAtlasStyle(index,cols,rows){
+  const col=index%cols,row=Math.floor(index/cols);
+  return 'background-position:'+(cols===1?0:col/(cols-1)*100)+'% '+(rows===1?0:row/(rows-1)*100)+'%';
+}
+function unitSpriteHtml(type,extra){
+  const i=UNIT_SPRITE[type];
+  return i===undefined?'':'<span class="u-sprite '+(extra||'')+'" style="'+cssAtlasStyle(i,5,4)+'" aria-hidden="true"></span>';
+}
+function buildingSpriteHtml(type,extra){
+  const i=BUILDING_SPRITE[type];
+  return i===undefined?'':'<span class="pixel-dock-icon '+(extra||'')+'" style="'+cssAtlasStyle(i,4,4)+'" aria-hidden="true"></span>';
+}
+function makeLayer(){
+  try{
+    const c=document.createElement('canvas');
+    const cctx=c.getContext&&c.getContext('2d');
+    return cctx?{canvas:c,ctx:cctx}:null;
+  }catch(_){return null;}
+}
+function setupLayer(layer){
+  if(!layer)return;
+  layer.canvas.width=Math.max(1,Math.round(W*renderDpr));
+  layer.canvas.height=Math.max(1,Math.round(H*renderDpr));
+  layer.ctx.setTransform(renderDpr,0,0,renderDpr,0,0);
+}
+function layerImage(layer){
+  if(!layer||typeof mainCtx.drawImage!=='function')return;
+  try{mainCtx.drawImage(layer.canvas,0,0,W,H);}catch(_){
+    try{mainCtx.drawImage(layer.canvas,0,0);}catch(__){}
+  }
+}
 
 /* ---- viewport ---- */
 function resize(){
   const dpr=window.devicePixelRatio||1;
   W=window.innerWidth||960; H=window.innerHeight||600;
+  renderDpr=dpr;
   el.cv.width=Math.round(W*dpr); el.cv.height=Math.round(H*dpr);
   el.cv.style.width=W+'px'; el.cv.style.height=H+'px';
-  ctx.setTransform(dpr,0,0,dpr,0,0);
+  mainCtx.setTransform(dpr,0,0,dpr,0,0);
+  if(!terrainLayer)terrainLayer=makeLayer();
+  if(!detailLayer)detailLayer=makeLayer();
+  setupLayer(terrainLayer);setupLayer(detailLayer);
+  terrainLayerCtx=terrainLayer&&terrainLayer.ctx;
+  detailLayerCtx=detailLayer&&detailLayer.ctx;
+  terrainDirty=true;detailDirty=true;detailSig='';detailStamp=-Infinity;
 }
 const fr=i=>{const x=Math.sin(i*127.1+13.7)*43758.5453;return x-Math.floor(x);};
 /* menos cielo, más campo: el horizonte baja al ~27% del alto */
@@ -1570,6 +2411,14 @@ const horizonY=()=>H*0.27;
 
 /* ---- cielo y ambiente ---- */
 function drawSky(){
+  if(spriteReady(PIXEL_ASSETS.world)){
+    ctx.save();ctx.imageSmoothingEnabled=false;
+    const iw=PIXEL_ASSETS.world.naturalWidth,ih=PIXEL_ASSETS.world.naturalHeight,sc=Math.max(W/iw,H/ih);
+    const dw=iw*sc,dh=ih*sc,dx=(W-dw)/2,dy=(H-dh)/2;
+    ctx.drawImage(PIXEL_ASSETS.world,0,0,iw,ih,dx,dy,dw,dh);
+    ctx.fillStyle='rgba(8,18,10,0.16)';ctx.fillRect(0,0,W,H);ctx.restore();
+    return;
+  }
   const hY=horizonY();
   const g=ctx.createLinearGradient(0,0,0,hY);
   g.addColorStop(0,'#4e7dab');g.addColorStop(0.5,'#8fb2cf');
@@ -1606,6 +2455,14 @@ function drawSky(){
 }
 function drawTerrain(){
   const hY=horizonY();
+  if(spriteReady(PIXEL_ASSETS.world)){
+    // El fondo de juego es una placa limpia, sin edificios ni tropas impresas:
+    // el estado visible procede únicamente de los sprites interactivos.
+    ctx.fillStyle='rgba(10,22,11,.70)';ctx.fillRect(0,meadowLaneY()-58,W,2);
+    ctx.fillStyle='#d7efaa';ctx.font='700 11px "Courier New",monospace';ctx.textAlign='center';
+    ctx.fillText('— EL PRADO · FRENTE ECONÓMICO —',W/2,meadowLaneY()-66);
+    return;
+  }
   // lomas lejanas
   ctx.fillStyle='#41604a';
   ctx.beginPath();ctx.moveTo(0,hY+4);
@@ -1649,7 +2506,30 @@ function drawTerrain(){
 }
 
 /* ---- castillos ---- */
+function drawPixelStronghold(side){
+  if(!spriteReady(PIXEL_ASSETS.buildings))return false;
+  const s=S.sides[side],blue=side==='P',cw=castleW(),ch=castleH(),x=castleX(side),base=castleBaseY();
+  drawAtlas(PIXEL_ASSETS.buildings,blue?BUILDING_SPRITE.castleP:BUILDING_SPRITE.castleE,4,4,x,base-ch,cw,ch,false);
+  const wall=s.def.wall;
+  if(wall.lvl>0&&wall.hp>0){
+    const ww=76+wall.lvl*10,wh=48+wall.lvl*5,wx=wallFrontX(side)-ww/2;
+    drawAtlas(PIXEL_ASSETS.buildings,BUILDING_SPRITE.wall,4,4,wx,laneY()-wh+9,ww,wh,!blue);
+    const pct=wall.hp/wallMaxHp(side,wall.lvl);ctx.fillStyle='#100b03';ctx.fillRect(wx,laneY()-wh,ww,5);ctx.fillStyle='#65b55a';ctx.fillRect(wx,laneY()-wh,ww*pct,4);
+  }
+  for(let i=0;i<s.def.towers.length;i++){
+    const tw=s.def.towers[i];if(tw.hp<=0)continue;
+    drawAtlas(PIXEL_ASSETS.buildings,BUILDING_SPRITE.tower,4,4,tw.x-34,tw.y-66,68,68,!blue);
+  }
+  if(s.wonder.built&&s.wonder.hp>0){
+    const p=wonderPos(side);drawAtlas(PIXEL_ASSETS.buildings,BUILDING_SPRITE.wonder,4,4,p.x-47,p.y-96,94,100,false);
+  }
+  if(spriteReady(PIXEL_ASSETS.meadow))drawAtlas(PIXEL_ASSETS.meadow,blue?8:9,4,4,x+cw/2-24,base-ch-26,48,48,false);
+  const max=castleMaxHp(side),pct=clamp(s.castleHp/max,0,1),bw=Math.max(70,cw*.78),bx=x+(cw-bw)/2,by=base-ch-10;
+  ctx.fillStyle='#100b03';ctx.fillRect(bx,by,bw,7);ctx.fillStyle=pct>.5?'#65b55a':pct>.25?'#d9a83c':'#c44040';ctx.fillRect(bx+1,by+1,(bw-2)*pct,5);
+  return true;
+}
 function drawCastle(side){
+  if(drawPixelStronghold(side))return;
   const s=S.sides[side];
   const w=castleW(),h=castleH();
   const x=castleX(side),baseY=castleBaseY(),top=baseY-h;
@@ -1730,11 +2610,128 @@ function drawCastle(side){
   ctx.strokeStyle='rgba(201,162,39,0.55)';ctx.lineWidth=1;ctx.strokeRect(bx-2,by-2,bw+4,11);
   ctx.fillStyle=pct>0.5?'#5fae52':pct>0.25?'#d9a83c':'#c44040';
   ctx.fillRect(bx,by,bw*pct,7);
+  drawDefense(side);
+}
+
+/* ---- Muralla y torres: construibles con piedra ---- */
+function drawDefense(side){
+  const s=S.sides[side];
+  const blue=side==='P';
+  const lw=52,wallY=laneY();
+  // muralla: un tramo almenado con torreón de esquina
+  if(s.def.wall.hp>0){
+    const wx=wallFrontX(side), pct=s.def.wall.hp/DEFENSE.wall.hp[s.def.wall.lvl];
+    const dir=blue?1:-1;
+    ctx.save();
+    ctx.translate(wx,wallY-8);
+    ctx.fillStyle='rgba(0,0,0,0.25)';ctx.beginPath();ctx.ellipse(dir*lw*0.5,wallY,44,6,0,0,6.29);ctx.fill();
+    const body='#7c828c',edge=blue?'#565b62':'#6a6360';
+    // cuerpo
+    ctx.fillStyle=body;ctx.fillRect(-26,0,52,26);
+    ctx.strokeStyle='rgba(0,0,0,0.14)';ctx.lineWidth=1;
+    for(let i=0;i<3;i++){ctx.beginPath();ctx.moveTo(-26+i*17,2);ctx.lineTo(-26+i*17,26);ctx.stroke();}
+    // almenas
+    ctx.fillStyle=edge;
+    for(let i=0;i<4;i++)ctx.fillRect(-26+i*13,-8,8,8);
+    // torreón central
+    ctx.fillStyle=edge;ctx.fillRect(-9,-20,18,20);
+    ctx.fillStyle='rgba(255,255,255,0.08)';ctx.fillRect(-9,-20,18,5);
+    ctx.fillStyle='#241a0e';ctx.fillRect(-3,2,6,6);
+    // grietas por daño
+    if(pct<0.6){
+      ctx.strokeStyle='rgba(20,16,10,0.5)';ctx.lineWidth=1.6;
+      ctx.beginPath();ctx.moveTo(-20,-2);ctx.lineTo(-15,10);ctx.lineTo(-22,20);ctx.stroke();
+    }
+    if(pct<0.3){
+      ctx.fillStyle='rgba(255,140,40,'+(0.3+0.2*Math.sin(S.t*9))+')';
+      ctx.beginPath();ctx.moveTo(0,8);ctx.lineTo(7,0);ctx.lineTo(9,14);ctx.closePath();ctx.fill();
+    }
+    ctx.restore();
+    // barra de vida de la muralla
+    const bx=wx-dir*lw-18,by=wallY-52;
+    ctx.fillStyle='rgba(16,12,5,0.85)';ctx.fillRect(bx,by,44,6);
+    ctx.fillStyle=pct>0.5?'#5fae52':pct>0.25?'#d9a83c':'#c44040';
+    ctx.fillRect(bx,by,44*pct,6);
+  }
+  // torres de vigilancia
+  s.def.towers.forEach((tw,i)=>{
+    if(tw.hp<=0){
+      // ruinas
+      ctx.fillStyle='#3c4046';
+      ctx.fillRect(tw.x-7,tw.y-6,14,5);
+      ctx.beginPath();ctx.moveTo(tw.x-8,tw.y-1);ctx.lineTo(tw.x-2,tw.y-6);ctx.lineTo(tw.x+2,tw.y-1);ctx.closePath();ctx.fill();
+      return;
+    }
+    const pct=tw.hp/tw.max;
+    ctx.save();
+    ctx.translate(tw.x,tw.y);
+    ctx.fillStyle='rgba(0,0,0,0.22)';ctx.beginPath();ctx.ellipse(0,4,13,4,0,0,6.29);ctx.fill();
+    ctx.fillStyle='#7c828c';ctx.fillRect(-6,-24,12,26);
+    ctx.fillStyle=blue?'#565b62':'#6a6360';
+    for(let k=0;k<3;k++)ctx.fillRect(-6+k*4,-29,4,5);
+    ctx.fillStyle='rgba(255,255,255,0.08)';ctx.fillRect(-6,-24,12,4);
+    ctx.fillStyle='#241a0e';ctx.fillRect(-1.6,-14,3.2,7);
+    // saetera encendida: dispara
+    ctx.fillStyle='rgba(255,200,80,'+(0.5+0.4*Math.sin(S.t*7+i))+')';
+    ctx.fillRect(-1,-22,2,3);
+    ctx.restore();
+    if(pct<1){
+      const bx=tw.x-13,by=tw.y-36;
+      ctx.fillStyle='rgba(16,12,5,0.85)';ctx.fillRect(bx,by,26,5);
+      ctx.fillStyle=pct>0.5?'#5fae52':pct>0.25?'#d9a83c':'#c44040';
+      ctx.fillRect(bx,by,26*pct,5);
+    }
+  });
+  // maravilla: un santuario alto coronado por una luz, símbolo del fin de la contienda
+  const w=s.wonder;
+  if(w.built){
+    const p=wonderPos(side),dir=blue?1:-1;
+    const pulse=0.5+0.5*Math.sin(S.t*3);
+    ctx.save();
+    ctx.translate(p.x,p.y);
+    ctx.fillStyle='rgba(0,0,0,0.25)';ctx.beginPath();ctx.ellipse(0,6,30,7,0,0,6.29);ctx.fill();
+    // basamento
+    ctx.fillStyle='#8d939c';ctx.fillRect(-22,0,44,8);
+    ctx.fillStyle='#6e747c';ctx.fillRect(-18,-26,36,26);
+    // columnata
+    ctx.fillStyle=blue?'#d9c7a3':'#cfc2b0';
+    for(let k=-2;k<=2;k++){
+      ctx.fillRect(k*8-2.6,-34,5,14);
+      if(k%2===0)ctx.fillStyle=blue?'#d9c7a3':'#cfc2b0';else ctx.fillStyle=blue?'#b9a67f':'#b3a690';
+    }
+    // arquitrabe y frontón
+    ctx.fillStyle='#6e747c';ctx.fillRect(-24,-40,48,7);
+    ctx.fillStyle=blue?'#7c828c':'#827b76';ctx.beginPath();
+    ctx.moveTo(-26,-40);ctx.lineTo(0,-58);ctx.lineTo(26,-40);ctx.closePath();ctx.fill();
+    // cúpula dorada
+    ctx.fillStyle='#e0b64a';
+    ctx.beginPath();ctx.arc(0,-66,12,Math.PI,0);ctx.fill();
+    ctx.fillStyle='#f5d97a';
+    ctx.beginPath();ctx.arc(0,-69,6,Math.PI,0);ctx.fill();
+    // aguja con luz pulsante
+    ctx.strokeStyle='#c9a227';ctx.lineWidth=2;
+    ctx.beginPath();ctx.moveTo(0,-78);ctx.lineTo(0,-96);ctx.stroke();
+    ctx.fillStyle='rgba(255,220,120,'+(0.5+0.4*pulse)+')';
+    ctx.beginPath();ctx.arc(0,-99,4+pulse*2,0,6.29);ctx.fill();
+    ctx.restore();
+    // barra de vida
+    const bx=p.x-30,by=p.y-120;
+    ctx.fillStyle='rgba(16,12,5,0.85)';ctx.fillRect(bx,by,60,7);
+    const wp=w.hp/w.max;
+    ctx.fillStyle=wp>0.5?'#5fae52':wp>0.25?'#d9a83c':'#c44040';
+    ctx.fillRect(bx,by,60*wp,7);
+    // anillo del countdown
+    const left=Math.max(0,Math.min(1,1-w.t/WONDER.time));
+    ctx.strokeStyle='rgba(224,182,74,0.7)';ctx.lineWidth=2;
+    ctx.beginPath();ctx.arc(p.x,p.y-104,10,0,6.29);ctx.stroke();
+    ctx.strokeStyle='rgba(245,217,122,0.95)';
+    ctx.beginPath();ctx.arc(p.x,p.y-104,10,-Math.PI/2,-Math.PI/2+6.29*left);ctx.stroke();
+  }
 }
 
 /* ---- nodos de recursos y aldeanos ---- */
 function nodeDefs(side){
-  return ['wood','farm','mine'].map(k=>{
+  return ['wood','farm','mine','quarry'].map(k=>{
     const p=nodePos(k,side);
     return {k,x:p.x,y:p.y};
   });
@@ -1761,9 +2758,48 @@ function villager(x,y,phase,tool){
 const VILL_OFF={
   farm:[[-22,4],[-8,8],[6,4],[20,8],[-16,12],[8,13],[24,3],[-26,9]],
   wood:[[14,4],[24,8],[4,9],[18,13],[28,3],[8,4],[32,10],[12,0]],
-  mine:[[-14,6],[-2,10],[10,6],[-8,14],[6,15],[16,12],[-20,10],[0,4]]
+  mine:[[-14,6],[-2,10],[10,6],[-8,14],[6,15],[16,12],[-20,10],[0,4]],
+  quarry:[[-18,4],[-4,9],[10,4],[-12,13],[4,14],[18,11],[-24,8],[16,7]]
 };
+function drawPixelWorker(x,y,phase,flip){
+  const step=Math.sin(phase*2.2),work=Math.sin(phase*3.1)*0.10;
+  ctx.save();ctx.translate(x,y+Math.abs(step)*1.5);ctx.rotate(work);
+  drawAtlas(PIXEL_ASSETS.units,12,5,4,-11,-27,22,29,flip);ctx.restore();
+}
+function drawPixelNodes(side){
+  if(!spriteReady(PIXEL_ASSETS.buildings)||!spriteReady(PIXEL_ASSETS.units)||!spriteReady(PIXEL_ASSETS.meadow))return false;
+  const s=S.sides[side],flip=side==='E',resourceSprite={farm:2,wood:3,mine:5,quarry:6};
+  for(const nd of nodeDefs(side)){
+    const lvl=s.eng[nd.k];
+    if(lvl<=0)drawAtlas(PIXEL_ASSETS.meadow,resourceSprite[nd.k],4,4,nd.x-30,nd.y-34,60,56,flip);
+    else{
+      const visible=Math.min(lvl,8);
+      for(let i=0;i<visible;i++){
+        const col=i%4,row=Math.floor(i/4),dir=side==='P'?1:-1;
+        const ox=(col-1.5)*31*dir,oy=row*21-30;
+        drawAtlas(PIXEL_ASSETS.buildings,BUILDING_SPRITE[nd.k],4,4,nd.x+ox-24,nd.y+oy-31,48,48,flip);
+      }
+    }
+    const alive=s.workers[nd.k].alive;
+    for(let i=0;i<Math.min(alive,8);i++){
+      const o=VILL_OFF[nd.k][i],phase=S.t*2.7+i*1.37;
+      drawPixelWorker(nd.x+o[0],nd.y+o[1]+9,phase,flip);
+    }
+    if(lvl>0&&alive<lvl){
+      const pulse=.55+.45*Math.sin(S.t*6);ctx.strokeStyle='rgba(255,72,48,'+pulse+')';ctx.lineWidth=3;
+      ctx.strokeRect(nd.x-36,nd.y-42,72,58);
+    }
+  }
+  for(const k of ['store','watch','camp']){
+    const lvl=s.meadow[k];if(lvl<=0)continue;
+    const p=meadowStructurePos(side,k),size=k==='camp'?72:62;
+    drawAtlas(PIXEL_ASSETS.buildings,BUILDING_SPRITE[k],4,4,p.x-size/2,p.y-size+8,size,size,flip);
+    ctx.fillStyle=side==='P'?'#bde2ff':'#ffc1b8';ctx.font='700 10px "Courier New",monospace';ctx.textAlign='center';ctx.fillText('x'+lvl,p.x,p.y+14);
+  }
+  return true;
+}
 function drawNodes(side){
+  if(drawPixelNodes(side))return;
   const s=S.sides[side], dim=side==='E';
   if(dim)ctx.globalAlpha=0.92;
   for(const nd of nodeDefs(side)){
@@ -1794,7 +2830,7 @@ function drawNodes(side){
       ctx.fillRect(nd.x+8,nd.y+4,16,4.4);ctx.fillRect(nd.x+11,nd.y-0.5,10,4.4);
       ctx.fillStyle='#a5793f';
       ctx.beginPath();ctx.arc(nd.x+8.6,nd.y+6.2,2.2,0,6.29);ctx.arc(nd.x+11.6,nd.y+1.7,2,0,6.29);ctx.fill();
-    }else{
+    }else if(nd.k==='mine'){
       ctx.fillStyle='#6d727a';
       ctx.beginPath();ctx.moveTo(nd.x-22,nd.y+10);ctx.lineTo(nd.x-12,nd.y-6);ctx.lineTo(nd.x-2,nd.y+4);ctx.lineTo(nd.x-8,nd.y+12);ctx.closePath();ctx.fill();
       ctx.fillStyle='#5c6167';
@@ -1806,9 +2842,20 @@ function drawNodes(side){
         ctx.fillStyle='rgba(240,208,110,'+(0.45+0.35*Math.sin(S.t*2.6+i*1.7))+')';
         ctx.beginPath();ctx.arc(nd.x-10+i*8,nd.y+2+fr(i+61)*7,1.6,0,6.29);ctx.fill();
       }
+    }else{ // cantera: bloques de piedra apilados
+      ctx.fillStyle='rgba(20,22,26,0.30)';ctx.beginPath();ctx.ellipse(nd.x,nd.y+9,30,5,0,0,6.29);ctx.fill();
+      const qu=[[-20,4,0],[-6,-2,1],[8,3,0],[-12,10,1],[14,10,0],[-26,9,1]];
+      for(const [qx,qy,hi] of qu){
+        ctx.fillStyle=hi?'#54595f':'#6d727a';
+        ctx.fillRect(nd.x+qx,nd.y+qy,9,7);
+        ctx.strokeStyle='#3c4046';ctx.lineWidth=1;
+        ctx.strokeRect(nd.x+qx,nd.y+qy,9,7);
+        ctx.fillStyle='rgba(240,208,110,0.25)';
+        ctx.fillRect(nd.x+qx+2,nd.y+qy+2,2,2);
+      }
     }
     // aldeanos faenando: solo los VIVOS tras los raideos (más nivel = más manos)
-    const tool=nd.k==='farm'?'hoe':nd.k==='wood'?'axe':'pick';
+    const tool=nd.k==='farm'?'hoe':nd.k==='wood'?'axe':nd.k==='mine'?'pick':'pick';
     const alive=s.workers[nd.k].alive;
     for(let i=0;i<Math.min(alive,8);i++){
       const o=VILL_OFF[nd.k][i];
@@ -1829,9 +2876,36 @@ function drawNodes(side){
 
 /* ---- unidades ---- */
 const CLOTH={P:{main:'#2f62b8',trim:'#1c3f78',dark:'#16345e'},E:{main:'#b03434',trim:'#6e1d1d',dark:'#571414'}};
+function drawPixelUnit(u){
+  if(!spriteReady(PIXEL_ASSETS.units)||UNIT_SPRITE[u.type]===undefined)return false;
+  const def=UNITS[u.type],baseY=(u.front==='meadow'?meadowLaneY():laneY())+u.y0;
+  const mounted=def.mount||def.kind==='elephant',siege=def.siege;
+  const w=def.kind==='elephant'?78:siege?68:mounted?60:42;
+  const h=def.kind==='elephant'?66:siege?56:mounted?56:48;
+  let alpha=1,rot=0;
+  if(u.dying){const k=1-u.dieT/0.6;alpha=Math.max(0,1-k);rot=k*1.45*(u.side==='P'?1:-1);}
+  const walking=u.action==='walk';
+  const stride=walking?Math.sin(u.ph)*2.2:0;
+  const bob=walking?Math.abs(Math.sin(u.ph))*2.4:Math.sin(S.t*2+u.slot)*.7;
+  const lunge=(u.actionT||0)>0&&(u.action==='attack'||u.action==='torch')?4*(u.side==='P'?1:-1):0;
+  const workTilt=u.action==='work'?Math.sin(S.t*12)*0.10:0;
+  ctx.save();ctx.globalAlpha=alpha;ctx.translate(u.x+lunge,baseY-bob);ctx.rotate(rot+workTilt);
+  ctx.fillStyle=u.side==='P'?'rgba(66,145,255,.42)':'rgba(255,74,60,.42)';ctx.beginPath();ctx.ellipse(0,2,w*.35,4,0,0,6.29);ctx.fill();
+  drawAtlas(PIXEL_ASSETS.units,UNIT_SPRITE[u.type],5,4,-w/2+stride*.25,-h,w,h,u.side==='E');
+  if(u.action==='torch'&&spriteReady(PIXEL_ASSETS.meadow)){
+    drawAtlas(PIXEL_ASSETS.meadow,10,4,4,(u.side==='P'?9:-23),-31,20,22,false);
+  }
+  ctx.restore();
+  if(u.hp<u.max&&!u.dying){
+    const bw=Math.max(24,w*.55),by=baseY-h-8;ctx.fillStyle='#100b03';ctx.fillRect(u.x-bw/2,by,bw,5);
+    ctx.fillStyle='#65b55a';ctx.fillRect(u.x-bw/2+1,by+1,(bw-2)*Math.max(0,u.hp/u.max),3);
+  }
+  return true;
+}
 function drawUnit(u){
+  if(drawPixelUnit(u))return;
   const def=UNITS[u.type], cl=CLOTH[u.side];
-  const y=laneY()+u.y0;
+  const y=(u.front==='meadow'?meadowLaneY():laneY())+u.y0;
   const sc=0.9+((u.y0+20)/40)*0.28;
   let alpha=1,rot=0;
   if(u.dying){const k=1-u.dieT/0.6;alpha=Math.max(0,1-k);rot=k*1.9*(u.side==='P'?1:-1);}
@@ -2210,17 +3284,53 @@ function drawRings(){
     ctx.beginPath();ctx.ellipse(r.x,r.y||laneY(),rad,rad*0.32,0,0,6.29);ctx.stroke();
   }
 }
+function drawTorches(){
+  for(const t of S.torches){
+    const p=clamp(t.t,0,1),x=t.sx+(t.tx-t.sx)*p,y=t.y+(t.ty-t.y)*p-Math.sin(Math.PI*p)*24;
+    ctx.save();ctx.translate(x,y);ctx.rotate(Math.atan2(t.ty-t.y,t.tx-t.sx)+p*5.5);
+    if(spriteReady(PIXEL_ASSETS.meadow))drawAtlas(PIXEL_ASSETS.meadow,10,4,4,-9,-12,18,20,false);
+    else{ctx.fillStyle='#ff9b32';ctx.fillRect(-3,-5,6,10);}
+    ctx.restore();
+  }
+}
+function detailLayerSignature(){
+  const p=S.sides.P,e=S.sides.E, vals=[W,H,p.age,e.age,p.castleHp,e.castleHp,
+    p.eng.farm,p.eng.wood,p.eng.mine,p.eng.quarry,e.eng.farm,e.eng.wood,e.eng.mine,e.eng.quarry,
+    p.workers.farm.alive,p.workers.wood.alive,p.workers.mine.alive,p.workers.quarry.alive,
+    e.workers.farm.alive,e.workers.wood.alive,e.workers.mine.alive,e.workers.quarry.alive,
+    p.def.wall.lvl,p.def.wall.hp,e.def.wall.lvl,e.def.wall.hp,p.wonder.built,p.wonder.hp,e.wonder.built,e.wonder.hp,
+    p.meadow.store,p.meadow.watch,p.meadow.camp,e.meadow.store,e.meadow.watch,e.meadow.camp];
+  for(const side of [p,e])for(const tw of side.def.towers)vals.push(tw.hp,tw.max,tw.x,tw.y);
+  return vals.join('|');
+}
 function render(){
+  // El cielo, las tropas y los FX son dinámicos y se dibujan cada frame.
+  ctx=mainCtx;
   drawSky();
-  drawTerrain();
-  drawNodes('E');
-  drawNodes('P');
-  drawCastle('P');
-  drawCastle('E');
+  if(terrainLayer&&terrainLayerCtx){
+    if(terrainDirty){
+      const prev=ctx;ctx=terrainLayerCtx;
+      try{ctx.clearRect(0,0,W,H);drawTerrain();}finally{ctx=prev;terrainDirty=false;}
+    }
+    layerImage(terrainLayer);
+  }else drawTerrain();
+  const now=(typeof performance!=='undefined'&&performance.now)?performance.now():Date.now();
+  const sig=detailLayerSignature();
+  if(detailLayer&&detailLayerCtx){
+    if(detailDirty||sig!==detailSig||now-detailStamp>=100){
+      const prev=ctx;ctx=detailLayerCtx;
+      try{ctx.clearRect(0,0,W,H);drawNodes('E');drawNodes('P');drawCastle('P');drawCastle('E');}
+      finally{ctx=prev;detailDirty=false;detailSig=sig;detailStamp=now;}
+    }
+    layerImage(detailLayer);
+  }else{
+    drawNodes('E');drawNodes('P');drawCastle('P');drawCastle('E');
+  }
   drawRings();
   const us=S.units.slice().sort((a,b)=>a.y0-b.y0);
   for(const u of us)drawUnit(u);
   drawArrows();
+  drawTorches();
   drawParticles();
   drawNums();
 }
@@ -2248,9 +3358,11 @@ function buildCivGrid(){
   g.innerHTML='';
   CIV_ORDER.forEach((id,i)=>{
     const c=CIVS[id];
-    const card=document.createElement('div');
+    const card=document.createElement('button');
+    card.type='button';
     card.className='civ-card';card.dataset.civ=id;
-    card.innerHTML='<span class="civ-key">'+(i+1)+'</span>'+bannerSVG(id)+
+    card.setAttribute('aria-label','Elegir civilización '+c.name+' — '+c.bDesc);
+    card.innerHTML='<span class="civ-key">'+(i+1)+'</span>'+unitSpriteHtml(c.unit)+
       '<span class="civ-name">'+c.name+'</span>'+
       '<span class="civ-unit">&#9733; '+c.bDesc+'</span>'+
       '<span class="civ-bonus">'+c.bonus+'</span>';
@@ -2264,6 +3376,10 @@ function buildDiffSelector(){
   DIFF.forEach((d,i)=>{
     const b=document.createElement('button');
     b.className='btn diff-btn'+(i===difficulty?' active':'');
+    b.type='button';
+    b.setAttribute('aria-pressed',String(i===difficulty));
+    b.title=d.hint;
+    b.setAttribute('aria-label',d.name+': '+d.hint);
     b.textContent=d.name;
     b.addEventListener('click',()=>setDiff(i));
     el.diffBtns.appendChild(b);
@@ -2271,7 +3387,8 @@ function buildDiffSelector(){
 }
 function setDiff(n){
   difficulty=clamp(n|0,0,3);
-  el.diffBtns.querySelectorAll('.diff-btn').forEach((b,i)=>b.classList.toggle('active',i===difficulty));
+  el.diffBtns.querySelectorAll('.diff-btn').forEach((b,i)=>{b.classList.toggle('active',i===difficulty);b.setAttribute('aria-pressed',String(i===difficulty));});
+  savePreferences();
 }
 function startWithCiv(pCiv){
   if(!el.civpick.classList.contains('show'))return;
@@ -2280,13 +3397,16 @@ function startWithCiv(pCiv){
 }
 function startMatch(pCiv,eCiv){
   el.civpick.classList.remove('show');
+  el.civpick.setAttribute('aria-hidden','true');
+  delete dialogFocus.civpick;
+  manualPaused=false;syncPauseUI();
   newGame(pCiv,eCiv);
   Snd.click();
 }
 function refreshCivHud(){
   const pc=S.sides.P.civ, ec=S.sides.E.civ;
-  el.pIco.innerHTML=pc?bannerSVG(pc):bannerDefault('#24508f');
-  el.eIco.innerHTML=ec?bannerSVG(ec):bannerDefault('#8f2424');
+  el.pIco.innerHTML=pc?unitSpriteHtml(CIVS[pc].unit):unitSpriteHtml('lancer');
+  el.eIco.innerHTML=ec?unitSpriteHtml(CIVS[ec].unit):unitSpriteHtml('lancer');
   el.pCiv.textContent=pc?CIVS[pc].name+' · '+UNITS[CIVS[pc].unit].name:'Roster clásico';
   el.eCiv.textContent=ec?CIVS[ec].name+' · '+UNITS[CIVS[ec].unit].name:'Roster clásico';
 }
@@ -2295,7 +3415,8 @@ function refreshCivHud(){
 const RES_ICONS={
   food:'<svg viewBox="0 0 16 16" aria-hidden="true"><ellipse cx="8" cy="7" rx="2.4" ry="4.4" fill="#dcb24a"/><path d="M8 14V8" stroke="#b98f2e" stroke-width="1.6"/></svg>',
   wood:'<svg viewBox="0 0 16 16" aria-hidden="true"><rect x="2" y="6" width="12" height="5.6" rx="2.8" fill="#7a5230"/><circle cx="4.8" cy="8.8" r="1.9" fill="#a5793f"/></svg>',
-  gold:'<svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.4" fill="#e0b64a" stroke="#8a6d1c" stroke-width="1.2"/></svg>'
+  gold:'<svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.4" fill="#e0b64a" stroke="#8a6d1c" stroke-width="1.2"/></svg>',
+  stone:'<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 12 6 5l3.2 2 4.5-4.2 2.8 9.2Z" fill="#8d939c"/><path d="M6 5l2.5 2.4L6 12 3 8.2Z" fill="#62676f"/></svg>'
 };
 const ICONS={
   lancer:'<path d="M7 31 27 7" stroke="#8a5f36" stroke-width="2.4" stroke-linecap="round"/><path d="M27 7l3.6-3.4-1 4.8Z" fill="#c8ced4"/><circle cx="15" cy="20" r="5.4" fill="#2a5faa" stroke="#16345e" stroke-width="1.4"/><circle cx="15" cy="20" r="2" fill="#c9a227"/><path d="M11 33c1-3 7-3 8 0" fill="#1b3d70"/>',
@@ -2368,7 +3489,7 @@ function buildArmyDock(){
       }
       b.title=tip;
       b.innerHTML='<span class="ukbd">'+(list.indexOf(t)+1)+'</span>'+
-        '<span class="u-icowrap"><svg class="u-ico" viewBox="0 0 36 36" aria-hidden="true">'+ICONS[t]+'</svg><i class="ucd"></i></span>'+
+        '<span class="u-icowrap">'+unitSpriteHtml(t)+'<i class="ucd"></i></span>'+
         '<span class="u-txt"><span class="u-name">'+UNITS[t].name+
         (UNITS[t].unique?'<i class="u-uniq">&#9733; única</i>':'')+'</span>'+
         '<span class="u-cost">'+costHtml+'</span></span>'+
@@ -2387,10 +3508,10 @@ const CODEX_TABS=[['units','Unidades'],['tech','Tecnologías'],['civs','Civiliza
 let codexTab='units';
 const KIND_LABEL={spear:'Lanza',bow:'Arco',lightcav:'Cab. ligera',xbow:'Ballesta',gun:'Pólvora',
   cav:'Caballería',elitecav:'Cab. de élite',horsebow:'Arquería montada',sword:'Espada',
-  mangonel:'Asedio',bombard:'Asedio pesado',elephant:'Elefante'};
+  mangonel:'Asedio',bombard:'Asedio pesado',elephant:'Elefante',saboteur:'Incursión del Prado',warden:'Guardia del Prado'};
 const BONUS_LABEL={cav:'caballería',ranged:'a distancia',heavy:'pesados',siege:'asedio',
   lancer:'lanceros',knight:'caballeros',scout:'jinetes',crossbow:'ballesteros'};
-const RES_NAME={food:'Comida',wood:'Madera',gold:'Oro'};
+const RES_NAME={food:'Comida',wood:'Madera',gold:'Oro',stone:'Piedra'};
 function codexCostHtml(cost){
   let h='';
   for(const k in cost)h+='<span class="cost"><b>'+cost[k]+'</b>'+RES_ICONS[k]+'</span>';
@@ -2410,7 +3531,7 @@ function codexUnitCard(t){
   if(d.mount&&!d.siege)tags.push('montada');
   const tagHtml=tags.length?' <span class="cx-tags">'+tags.join(' · ')+'</span>':'';
   return '<div class="cx-card">'+
-    '<div class="cx-row"><span class="cx-uico"><svg class="u-ico" viewBox="0 0 36 36" aria-hidden="true">'+(ICONS[t]||'')+'</svg></span>'+
+    '<div class="cx-row"><span class="cx-uico">'+unitSpriteHtml(t)+'</span>'+
     '<span class="cx-ut"><b>'+d.name+'</b>'+(d.unique?'<i class="u-uniq">&#9733; única</i>':'')+
     '<span class="cx-sub">'+AGES[d.age].num+' · '+(KIND_LABEL[d.kind]||d.kind)+tagHtml+'</span></span>'+
     '<span class="cx-cost">'+codexCostHtml(d.cost)+'</span></div>'+
@@ -2421,7 +3542,8 @@ function codexUnitCard(t){
 function codexUnitsHtml(){
   const std=UNIT_ORDER.map(codexUnitCard).join('');
   const uniq=Object.keys(UNITS).filter(t=>UNITS[t].unique).map(codexUnitCard).join('');
-  return '<h3 class="cx-h">Roster clásico</h3>'+std+(uniq?'<h3 class="cx-h">Unidades únicas</h3>'+uniq:'');
+  const meadow=['saboteur','warden'].map(codexUnitCard).join('');
+  return '<h3 class="cx-h">Roster clásico</h3>'+std+'<h3 class="cx-h">Frente del Prado</h3>'+meadow+(uniq?'<h3 class="cx-h">Unidades únicas</h3>'+uniq:'');
 }
 function codexTechHtml(){
   let ages='';
@@ -2455,13 +3577,37 @@ function codexTechHtml(){
     form+='<div class="cx-row"><span class="cx-ut"><b>'+f.name+'</b>'+
       '<span class="cx-sub">'+f.hint+'</span></span></div>';
   }
-  return '<h3 class="cx-h">Edades</h3>'+ages+'<h3 class="cx-h">Herrería</h3>'+herr+'<h3 class="cx-h">Motores de economía</h3>'+eng+'<h3 class="cx-h">Formaciones</h3>'+form;
+  // defensa: muralla (hasta 3 niveles) y torres (hasta 2)
+  let def='<div class="cx-row"><span class="cx-ut"><b>Muralla</b>'+
+    '<span class="cx-sub">bloquea el asalto hasta derribarla · 3 niveles ('+DEFENSE.wall.hp.slice(1).join('/')+' PV) · reparar gasta '+codexCostHtml(WALL_REPAIR)+'</span></span>'+
+    '<span class="cx-cost">'+codexCostHtml(DEFENSE.wall.cost)+'</span></div>';
+  def+='<div class="cx-row"><span class="cx-ut"><b>Torre</b>'+
+    '<span class="cx-sub">acribilla al asedio a '+DEFENSE.tower.range+'px, '+DEFENSE.tower.dmg+' de daño · máx. 2 por bando</span></span>'+
+    '<span class="cx-cost">'+codexCostHtml(DEFENSE.tower.cost)+'</span></div>';
+  def+='<div class="cx-row"><span class="cx-ut"><b>Maravilla</b>'+
+    '<span class="cx-sub">victoria alternativa: mantenedla en pie '+WONDER.time+'s ('+WONDER.hp+' PV) · se pierde si la derriban · tecla U</span></span>'+
+    '<span class="cx-cost">'+AGES[WONDER.age].name+' · '+codexCostHtml(WONDER.cost)+'</span></div>';
+  let meadow='';
+  for(const k in MEADOW_STRUCTURES){
+    const m=MEADOW_STRUCTURES[k];
+    meadow+='<div class="cx-row"><span class="cx-ut"><b>'+m.name+'</b><span class="cx-sub">'+m.desc+' · máximo '+m.max+'</span></span>'+
+      '<span class="cx-cost">'+AGES[m.age].name+' · '+codexCostHtml(m.cost)+'</span></div>';
+  }
+  meadow+='<p class="cx-note">R envía Saboteadores contra el recurso marcado, Y despliega Guardianes y H cambia el objetivo. Infantería y caballería atacan edificios con antorchas; las máquinas de asedio conservan piedra o pólvora.</p>';
+  let ctech='';
+  for(const c of CIV_ORDER){
+    const t=CIV_TECH[c],cv=CIVS[c];
+    ctech+='<div class="cx-row"><span class="cx-num">'+cv.name+'</span>'+
+      '<span class="cx-ut"><b>'+t.name+'</b><span class="cx-sub">'+t.desc+'</span></span>'+
+      '<span class="cx-cost">'+AGES[t.age].name+' · '+codexCostHtml(t.cost)+'</span></div>';
+  }
+  return '<h3 class="cx-h">Edades</h3>'+ages+'<h3 class="cx-h">Herrería</h3>'+herr+'<h3 class="cx-h">Motores de economía</h3>'+eng+'<h3 class="cx-h">El Prado · segundo frente</h3>'+meadow+'<h3 class="cx-h">Defensa</h3>'+def+'<h3 class="cx-h">Tecnologías únicas</h3>'+ctech+'<h3 class="cx-h">Formaciones</h3>'+form;
 }
 function codexCivHtml(){
   return CIV_ORDER.map(c=>{
     const cv=CIVS[c],u=UNITS[cv.unit];
     return '<div class="cx-card">'+
-      '<div class="cx-row"><span class="cx-banner" style="background:'+cv.field+'"></span>'+
+      '<div class="cx-row">'+unitSpriteHtml(cv.unit,'cx-banner')+
       '<span class="cx-ut"><b>'+cv.name+'</b><span class="cx-sub">'+cv.bDesc+'</span></span>'+
       '<span class="cx-cost">Unidad única</span></div>'+
       '<div class="cx-row"><span class="cx-sub">Doctrina: '+cv.bonus+'</span></div>'+
@@ -2501,7 +3647,14 @@ function buildCodex(){
 function toggleCodex(force){
   if(!el.codex)return;
   const show=force===undefined?!el.codex.classList.contains('show'):force;
+  // La pausa es un diálogo modal exclusivo: no permitimos abrir el Codex
+  // mientras el overlay de pausa está visible (cerrarlo sigue estando permitido).
+  if(show&&manualPaused)return;
+  if(show)rememberDialogFocus(el.codex);
   el.codex.classList.toggle('show',show);
+  el.codex.setAttribute('aria-hidden',String(!show));
+  if(show)focusDialog(el.codex,el.codexX||el.codexTabs.querySelector('button'));
+  else restoreDialogFocus(el.codex);
   Snd.click();
 }
 
@@ -2522,11 +3675,12 @@ function cacheDom(){
   el.sEngP=$('s-engP');el.sEngE=$('s-engE');el.sDiff=$('s-diff');
   el.diffInline=$('diff-inline');el.diffBtns=$('diff-btns');
   el.era=$('era');el.toast=$('toast');
+  el.pauseBtn=$('pausebtn');el.pauseOverlay=$('pause-overlay');el.resumeBtn=$('resume-btn');
   el.codex=$('codex');el.codexBody=$('codex-body');el.codexTabs=$('codex-tabs');
   el.codexX=$('codex-x');el.codexBtn=$('codexbtn');el.codexBtnPick=$('codexbtn-civpick');
-  el.rv={food:$('rv-food'),wood:$('rv-wood'),gold:$('rv-gold')};
-  el.rr={food:$('rr-food'),wood:$('rr-wood'),gold:$('rr-gold')};
-  el.resBox={food:$('res-food'),wood:$('res-wood'),gold:$('res-gold')};
+  el.rv={food:$('rv-food'),wood:$('rv-wood'),gold:$('rv-gold'),stone:$('rv-stone')};
+  el.rr={food:$('rr-food'),wood:$('rr-wood'),gold:$('rr-gold'),stone:$('rr-stone')};
+  el.resBox={food:$('res-food'),wood:$('res-wood'),gold:$('res-gold'),stone:$('res-stone')};
   el.lvl={};el.rate={};el.buyBtn={};el.buyCost={};el.buyLbl={};
   for(const k in ENGINES){
     const box=$('eng-'+k);
@@ -2536,17 +3690,45 @@ function cacheDom(){
     el.buyBtn[k]=b;el.buyCost[k]=b.querySelector('.cost b');el.buyLbl[k]=b.querySelector('span');
   }
   el.armyRow=$('army-row');
+  el.defBtn={wall:$('def-wall').querySelector('.buy'),tower:$('def-tower').querySelector('.buy')};
+  el.defLvl={wall:$('def-wall').querySelector('.lvl'),tower:$('def-tower').querySelector('.lvl')};
   el.speedBtn=$('speedbtn');el.speedLbl=$('speedlbl');
   el.formBtn=$('formbtn');el.formLbl=$('formlbl');
   el.upgBtn={atk:$('upg-atk'),def:$('upg-def')};
   el.upgPips={atk:$('upg-atk-pips'),def:$('upg-def-pips')};
   el.upgCost={atk:$('upg-atk-cost'),def:$('upg-def-cost')};
+  el.techBtn=$('tech-btn');
+  el.techName=$('tech-name');
+  el.techCost=$('tech-cost');
+  el.wonderBtn=$('wonder-btn');
+  el.wonderName=$('wonder-name');
+  el.wonderCost=$('wonder-cost');
+  el.meadowBuild={store:$('prado-store'),watch:$('prado-watch'),camp:$('prado-camp')};
+  el.meadowLvl={store:$('prado-store-lvl'),watch:$('prado-watch-lvl'),camp:$('prado-camp-lvl')};
+  el.meadowRaider=$('prado-raider');el.meadowWarden=$('prado-warden');
+  el.meadowStatus=$('prado-status');el.meadowTargets=$('prado-targets');
   el.ageBtn=$('agebtn');
   el.ageName=el.ageBtn.querySelector('.a-name');
   el.ageCost=el.ageBtn.querySelector('.a-cost');
   el.ageEra=el.ageBtn.querySelector('.a-era');
   el.ageCostBs=el.ageBtn.querySelectorAll('.a-cost b');
   el.ageFill=$('agefill');
+}
+function setupPixelUI(){
+  for(const k in ENGINES){
+    const box=document.getElementById('eng-'+k);
+    if(box&&box.insertAdjacentHTML&&!box.querySelector('.pixel-dock-icon'))box.insertAdjacentHTML('afterbegin',buildingSpriteHtml(k));
+  }
+  for(const pair of [['def-wall','wall'],['def-tower','tower']]){
+    const box=document.getElementById(pair[0]);
+    if(box&&box.insertAdjacentHTML&&!box.querySelector('.pixel-dock-icon'))box.insertAdjacentHTML('afterbegin',buildingSpriteHtml(pair[1]));
+  }
+  const meadowIcons={store:[5,4,4],watch:[9,4,4],camp:[8,4,4],raider:[10,5,4],warden:[11,5,4]};
+  for(const k in meadowIcons){
+    const b=k==='raider'?el.meadowRaider:k==='warden'?el.meadowWarden:el.meadowBuild[k];
+    const sp=b&&b.querySelector('.prado-sprite'),v=meadowIcons[k];
+    if(sp)sp.style.cssText=cssAtlasStyle(v[0],v[1],v[2]);
+  }
 }
 function toast(msg){
   el.toast.textContent=msg;
@@ -2565,9 +3747,53 @@ function heraldSync(){
     el.heraldEl.appendChild(d);
   }
 }
+function syncAriaDisabled(node){
+  if(!node)return;
+  const disabled=node.classList.contains('cant')||node.classList.contains('locked')||node.classList.contains('maxed');
+  node.setAttribute('aria-disabled',String(disabled));
+}
+function syncAccessibleState(){
+  const controls=[];
+  for(const k in el.buyBtn||{})controls.push(el.buyBtn[k]);
+  for(const k in el.defBtn||{})controls.push(el.defBtn[k]);
+  for(const k in el.upgBtn||{})controls.push(el.upgBtn[k]);
+  controls.push(el.techBtn,el.wonderBtn,el.ageBtn);
+  for(const k in el.meadowBuild||{})controls.push(el.meadowBuild[k]);
+  controls.push(el.meadowRaider,el.meadowWarden);
+  for(const t in el.unitBtn||{})controls.push(el.unitBtn[t]);
+  controls.forEach(syncAriaDisabled);
+}
+function meadowCostText(cost){
+  const short={food:'C',wood:'M',gold:'O',stone:'P'};
+  return Object.keys(cost).map(k=>cost[k]+short[k]).join(' ');
+}
+function syncMeadowUI(){
+  if(!S||!el.meadowStatus)return;
+  const p=S.sides.P,m=p.meadow;
+  for(const k in MEADOW_STRUCTURES){
+    const def=MEADOW_STRUCTURES[k],b=el.meadowBuild[k],lvl=m[k],locked=p.age<def.age,maxed=lvl>=def.max;
+    el.meadowLvl[k].textContent=lvl+'/'+def.max+(maxed?' · MÁX':' · '+meadowCostText(def.cost));
+    b.classList.toggle('locked',locked);b.classList.toggle('maxed',maxed);
+    b.classList.toggle('cant',!locked&&!maxed&&!canAfford('P',def.cost));
+    b.title=def.name+' — '+def.desc+'. '+(locked?'Requiere '+AGES[def.age].name:meadowCostText(def.cost));
+    b.setAttribute('aria-label',b.title+'; construidos '+lvl+' de '+def.max);
+  }
+  const raiders=meadowCount('P','saboteur'),wardens=meadowCount('P','warden');
+  const qRaid=p.queue.filter(q=>q.type==='saboteur').length,qWard=p.queue.filter(q=>q.type==='warden').length;
+  el.meadowRaider.classList.toggle('locked',p.age<UNITS.saboteur.age||m.camp<1);
+  el.meadowWarden.classList.toggle('locked',p.age<UNITS.warden.age||m.watch<1);
+  el.meadowRaider.classList.toggle('cant',!el.meadowRaider.classList.contains('locked')&&!canDeployMeadow('P','saboteur'));
+  el.meadowWarden.classList.toggle('cant',!el.meadowWarden.classList.contains('locked')&&!canDeployMeadow('P','warden'));
+  el.meadowRaider.setAttribute('aria-label','Reclutar Saboteador para '+NODE_NAME[m.target]+' rival; '+meadowCostText(unitCost('P','saboteur')));
+  el.meadowWarden.setAttribute('aria-label','Reclutar Guardián del Prado; '+meadowCostText(unitCost('P','warden')));
+  el.meadowStatus.textContent='Prado '+(raiders+wardens)+'/'+MEADOW_UNIT_CAP+' · '+raiders+' sab.'+(qRaid?' +'+qRaid:'')+' · '+wardens+' guard.'+(qWard?' +'+qWard:'')+' · '+m.raids+' golpes';
+  if(el.meadowTargets)el.meadowTargets.querySelectorAll('[data-prado-target]').forEach(b=>{
+    const active=b.dataset.pradoTarget===m.target;b.classList.toggle('active',active);b.setAttribute('aria-pressed',String(active));
+  });
+}
 function uiTick(){
   const P=S.sides.P,E=S.sides.E;
-  for(const r of ['food','wood','gold']){
+  for(const r of ['food','wood','gold','stone']){
     el.rv[r].textContent=Math.floor(P.res[r]);
     el.rr[r].textContent='+'+incomeOf('P',r).toFixed(1)+'/s';
     // la tasa se tiñe de rojo mientras dura el saqueo de ese recurso
@@ -2582,8 +3808,8 @@ function uiTick(){
   for(const k in ENGINES){
     const eng=ENGINES[k],lvl=P.eng[k];
     el.lvl[k].textContent=lvl>=ENG_CAP?'Nv '+lvl+' (máx)':'Nv '+lvl;
-    const rname=eng.res==='food'?'comida':eng.res==='wood'?'madera':'oro';
-    el.rate[k].textContent='+'+(lvl*eng.rate*CUM[P.age]).toFixed(1)+' '+rname+'/s';
+    const rname=eng.res==='food'?'comida':eng.res==='wood'?'madera':eng.res==='gold'?'oro':'piedra';
+    el.rate[k].textContent='+'+(lvl*eng.rate*CUM[P.age]*incomeMul('P')*ECON_PACE).toFixed(1)+' '+rname+'/s';
     const b=el.buyBtn[k];
     if(lvl>=ENG_CAP){
       b.classList.add('maxed');b.classList.remove('cant');
@@ -2594,6 +3820,33 @@ function uiTick(){
       el.buyCost[k].textContent=c;
       el.buyLbl[k].textContent=lvl===0?'Levantar':'Mejorar';
       b.classList.toggle('cant',!canAfford('P',{[eng.costRes]:c}));
+    }
+  }
+  // defensa: muralla y torres
+  {
+    const w=P.def.wall;
+    const wb=el.defBtn.wall,wt=el.defLvl.wall;
+    if(w.lvl>=DEFENSE.wall.max){
+      wb.classList.add('maxed');wb.classList.remove('cant');
+      wb.querySelector('.cost').innerHTML='<span class="cost">Al máximo</span>';
+      wt.textContent='Máxima';
+    }else{
+      wb.classList.remove('maxed');
+      wt.textContent=w.lvl===0?'Cerrada':'Nv '+w.lvl;
+      wb.querySelector('.cost').innerHTML=w.lvl===0
+        ?'<b>40</b>'+RES_ICONS.stone+'<b>20</b>'+RES_ICONS.wood
+        :'<b>40</b>'+RES_ICONS.stone+'<b>20</b>'+RES_ICONS.wood;
+      wb.classList.toggle('cant',!canAfford('P',DEFENSE.wall.cost));
+    }
+    const tb=el.defBtn.tower,tl=el.defLvl.tower;
+    const nT=P.def.towers.length;
+    tl.textContent=nT+'/2';
+    if(nT>=DEFENSE.tower.max){
+      tb.classList.add('maxed');tb.classList.remove('cant');
+      tb.querySelector('.cost').innerHTML='<span class="cost">Máximo</span>';
+    }else{
+      tb.classList.remove('maxed');
+      tb.classList.toggle('cant',!canAfford('P',DEFENSE.tower.cost));
     }
   }
   for(const k of ['atk','def']){
@@ -2615,6 +3868,56 @@ function uiTick(){
         '<b>'+(cost.wood||'')+'</b>'+(cost.wood?'<svg viewBox="0 0 16 16" aria-hidden="true"><rect x="2" y="6" width="12" height="5.6" rx="2.8" fill="#7a5230"/><circle cx="4.8" cy="8.8" r="1.9" fill="#a5793f"/></svg>':'')+
         '<b>'+(cost.gold||'')+'</b>'+(cost.gold?'<svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.4" fill="#e0b64a" stroke="#8a6d1c" stroke-width="1.2"/></svg>':'');
       b.classList.toggle('cant',!canAfford('P',cost));
+    }
+  }
+  const tb=el.techBtn,tc=el.techCost;
+  if(tb&&tc){
+    const civ=P.civ,tech=civ&&CIV_TECH[civ];
+    if(!tech){
+      tb.classList.add('cant');tb.classList.remove('maxed');
+      el.techName.textContent='—';tc.textContent='—';
+    }else if(P.tech){
+      tb.classList.add('maxed');tb.classList.remove('cant');
+      el.techName.textContent=tech.name;tc.textContent='HECHO';
+    }else{
+      tb.classList.remove('maxed');
+      el.techName.textContent=tech.name;
+      if(P.age<tech.age){
+        tb.classList.add('cant');
+        tc.textContent='Req. '+AGES[tech.age].name;
+      }else{
+        const cost=tech.cost;
+        tc.innerHTML='<b>'+(cost.food||'')+'</b>'+(cost.food?'<svg viewBox="0 0 16 16" aria-hidden="true"><ellipse cx="8" cy="7" rx="2.4" ry="4.4" fill="#dcb24a"/><path d="M8 14V8" stroke="#b98f2e" stroke-width="1.6"/></svg>':'')+
+          '<b>'+(cost.wood||'')+'</b>'+(cost.wood?'<svg viewBox="0 0 16 16" aria-hidden="true"><rect x="2" y="6" width="12" height="5.6" rx="2.8" fill="#7a5230"/><circle cx="4.8" cy="8.8" r="1.9" fill="#a5793f"/></svg>':'')+
+          '<b>'+(cost.gold||'')+'</b>'+(cost.gold?'<svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.4" fill="#e0b64a" stroke="#8a6d1c" stroke-width="1.2"/></svg>':'');
+        tb.classList.toggle('cant',!canAfford('P',cost));
+      }
+    }
+  }
+  const wb=el.wonderBtn,wc=el.wonderCost,wn=el.wonderName;
+  if(wb&&wc&&wn){
+    const w=P.wonder;
+    if(w.built){
+      wb.classList.add('maxed');wb.classList.remove('cant');
+      if(w.hp<=0){
+        wn.textContent='Maravilla destruida';wc.textContent='—';
+      }else{
+        wn.textContent='Maravilla en pie';wc.textContent=Math.max(0,Math.ceil(WONDER.time-w.t))+'s';
+      }
+    }else{
+      wb.classList.remove('maxed');
+      wn.textContent='Levantar la Maravilla';
+      if(P.age<WONDER.age){
+        wb.classList.add('cant');
+        wc.textContent='Req. '+AGES[WONDER.age].name;
+      }else{
+        const cost=WONDER.cost;
+        wc.innerHTML='<b>'+cost.food+'</b><svg viewBox="0 0 16 16" aria-hidden="true"><ellipse cx="8" cy="7" rx="2.4" ry="4.4" fill="#dcb24a"/><path d="M8 14V8" stroke="#b98f2e" stroke-width="1.6"/></svg>'+
+          '<b>'+cost.wood+'</b><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="2" y="6" width="12" height="5.6" rx="2.8" fill="#7a5230"/><circle cx="4.8" cy="8.8" r="1.9" fill="#a5793f"/></svg>'+
+          '<b>'+cost.gold+'</b><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.4" fill="#e0b64a" stroke="#8a6d1c" stroke-width="1.2"/></svg>'+
+          '<b>'+cost.stone+'</b><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 12 6 5l3.2 2 4.5-4.2 2.8 9.2Z" fill="#8d939c"/><path d="M6 5l2.5 2.4L6 12 3 8.2Z" fill="#62676f"/></svg>';
+        wb.classList.toggle('cant',!canAfford('P',cost));
+      }
     }
   }
   for(const t of S.hotkeys||UNIT_ORDER){
@@ -2653,31 +3956,50 @@ function uiTick(){
       el.ageBtn.classList.toggle('cant',!canAfford('P',AGES[P.age+1].cost));
     }
   }
+  syncMeadowUI();
   if(performance.now()>toastUntil)el.toast.classList.remove('show');
   heraldSync();
+  syncAccessibleState();
 }
 
 /* ---- entrada ---- */
 function wire(){
   for(const k in ENGINES)el.buyBtn[k].addEventListener('click',()=>buyEngine(k));
+  el.defBtn.wall.addEventListener('click',()=>buildDefense('wall'));
+  el.defBtn.tower.addEventListener('click',()=>buildDefense('tower'));
   el.upgBtn.atk.addEventListener('click',()=>playerBuyUpg('atk'));
   el.upgBtn.def.addEventListener('click',()=>playerBuyUpg('def'));
+  el.techBtn.addEventListener('click',playerBuyCivTech);
+  el.wonderBtn.addEventListener('click',playerBuildWonder);
+  for(const k in el.meadowBuild)el.meadowBuild[k].addEventListener('click',()=>playerBuildMeadow(k));
+  el.meadowRaider.addEventListener('click',()=>playerDeployMeadow('saboteur'));
+  el.meadowWarden.addEventListener('click',()=>playerDeployMeadow('warden'));
+  el.meadowTargets.querySelectorAll('[data-prado-target]').forEach(b=>b.addEventListener('click',()=>setMeadowTarget(b.dataset.pradoTarget)));
   el.ageBtn.addEventListener('click',playerAgeUp);
   el.codexBtn.addEventListener('click',()=>toggleCodex());
   el.codexBtnPick.addEventListener('click',()=>toggleCodex());
   el.codexX.addEventListener('click',()=>toggleCodex(false));
   el.speedBtn.addEventListener('click',()=>cycleSpeed());
+  el.pauseBtn.addEventListener('click',togglePause);
+  el.resumeBtn.addEventListener('click',()=>setPaused(false));
   el.formBtn.addEventListener('click',()=>cycleForm());
   el.volSlider=document.getElementById('vol-slider');
-  el.volSlider.addEventListener('input',()=>Snd.setVolume(el.volSlider.value/100));
+  el.volSlider.addEventListener('input',()=>{Snd.setVolume(el.volSlider.value/100);savePreferences();});
   document.getElementById('btn-restart').addEventListener('click',restart);
   el.btnCivpick.addEventListener('click',backToCivPick);
   addEventListener('pointerdown',()=>{Snd.ensure();Mus.ensure();});
   addEventListener('keydown',e=>{
     if(e.repeat)return;
     const k=(e.key||'').toLowerCase();
+    if(k==='tab'){trapDialogTab(e);return;}
     if(el.codex&&el.codex.classList.contains('show')){
       if(k==='c'||k==='escape'||k==='x')toggleCodex(false);
+      return;
+    }
+    // Mientras la pausa está activa, P/Escape reanudan y el resto de atajos
+    // (incluido C) no puede abrir ni activar diálogos secundarios.
+    if(manualPaused){
+      if(k==='p'||k==='escape')setPaused(false);
       return;
     }
     if(k==='c'){toggleCodex();return;}
@@ -2686,17 +4008,25 @@ function wire(){
       if(k>='1'&&k<='8')startWithCiv(CIV_ORDER[+k-1]);
       return;
     }
-    if(k==='m'){muted=!muted;toast(muted?'Silencio en el campamento':'Se oyen los tambores');Mus.vol();}
+    if(k==='p'){togglePause();return;}
+    if(k==='m'){muted=!muted;toast(muted?'Silencio en el campamento':'Se oyen los tambores');Mus.vol();savePreferences();}
     else if(k==='q')playerBuyUpg('atk');
     else if(k==='w')playerBuyUpg('def');
     else if(k==='f')playerAgeUp();
+    else if(k==='t')playerBuyCivTech();
+    else if(k==='u')playerBuildWonder();
     else if(k==='v')cycleSpeed();
     else if(k==='g')cycleForm();
+    else if(k==='b')buildDefense('wall');
+    else if(k==='n')buildDefense('tower');
+    else if(k==='r')playerDeployMeadow('saboteur');
+    else if(k==='y')playerDeployMeadow('warden');
+    else if(k==='h')cycleMeadowTarget();
     else if(k==='+'||k==='=')cycleSpeed(1);
     else if(k==='-'||k==='_')cycleSpeed(-1);
     else if(k>='1'&&k<='9'&&S.hotkeys)playerTrain(S.hotkeys[+k-1]);
   });
-  addEventListener('resize',resize);
+    addEventListener('resize',resize);
 }
 
 /* ---- bucle principal ----
@@ -2720,9 +4050,12 @@ function frame(now){
   const dt=Math.min((now-last)/1000,0.05);last=now;
   ctx.save();
   if(S.shake>0)ctx.translate(rr(-S.shake,S.shake),rr(-S.shake,S.shake)*0.6);
-  for(let i=0;i<gameSpeed;i++)simTick(dt);
+  // Tras declarar vencedor, fxTick necesita un segundo para completar la
+  // transición y abrir el resumen. Bloqueamos cuando el diálogo ya es visible.
+  const blocked=manualPaused||el.overlay.classList.contains('show')||el.civpick.classList.contains('show')||el.codex.classList.contains('show');
+  if(!blocked)for(let i=0;i<gameSpeed;i++)simTick(dt);
   render();
-  uiAcc+=dt*gameSpeed;
+  if(!blocked)uiAcc+=dt*gameSpeed;
   if(uiAcc>=0.1){uiAcc=0;uiTick();}
   Mus.schedule();
   ctx.restore();
@@ -2731,12 +4064,19 @@ function frame(now){
 
 /* ---- arranque ---- */
 cacheDom();
+setupPixelUI();
+loadPreferences();
 wire();
 resize();
 buildCivGrid();
+el.volSlider.value=Math.round(Snd.getVolume()*100);
+el.speedLbl.textContent='x'+gameSpeed;
+el.speedBtn.classList.toggle('hot',gameSpeed>1);
 newGame(null,null);
 buildCodex();
-el.civpick.classList.add('show'); // se juega tras elegir casa
+el.civpick.classList.add('show');el.civpick.setAttribute('aria-hidden','false'); // se juega tras elegir casa
+focusDialog(el.civpick,el.civGrid.querySelector('.civ-card'));
+Mus.stop();
 requestAnimationFrame(frame);
 
 </script>
